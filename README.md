@@ -11,3 +11,10 @@ ezfft.py: A FFT routine.
 CurveFitting: A rouinte for general curve fitting that is based on scipy.optimize.curve_fit.
 
 QENSFit: Fitting and plotting QENS/resolution data.
+
+
+This project is developed and maintained by Z Lab. Developers to this project were made by:
+
+Shao-Chun Lee (scl@illinois.edu)
+
+For obtaining user support please contact us at Z Lab (https://z.engineering.illinois.edu/).
