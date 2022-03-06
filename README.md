@@ -15,6 +15,6 @@ QENSFit: Fitting and plotting QENS/resolution data.
 
 This project is developed and maintained by Z Lab. Developers to this project were made by:
 
-Shao-Chun Lee (scl@illinois.edu)
+Shao-Chun Lee (scl6@illinois.edu)
 
 For obtaining user support please contact us at Z Lab (https://z.engineering.illinois.edu/).
