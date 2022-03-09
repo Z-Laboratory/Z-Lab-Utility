@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import curve_fit
 
-class FitModel:
+class Model:
     def __init__(self, function):
         self.function = function
         self.fit_function = function

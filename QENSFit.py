@@ -12,7 +12,7 @@ def power(x_, b, e0):
 def constant(x_, c):
     return np.ones_like(x_) * c
 
-class PlotData:
+class DataPlot:
     def __init__(self):
         pass
     
@@ -23,7 +23,7 @@ class PlotData:
         plt.savefig(plotfilename)
 
     def plot(self, x_, y_, plottype = None, legendtitle = "", yerr_ = [], legend_ = [], linestyle_ = None, markerstyle_ = None, markerface = True, markersize = 9, lw_ = None, color_ = None, log_fg = (False, False), xlabel = None, ylabel = None, xminortick = 2, yminortick = 4, xlim = None, ylim = None, legend_fontsize = 24, legendtitle_fontsize = 24, label_fontsize = 24, tick_fontsize = 24, figsize = (10, 8), axsize = .7, margin_ratio = 0.5, legend_column = 1, legend_location = 0):
-        default_color_list = plt.rc_params['axes.prop_cycle'].by_key()['color']
+        default_color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
         if color_:
             color_tmp = []
             for i in color_:
@@ -115,7 +115,7 @@ class grpFileReader:
             print("Number of qs: %s"%(n_q))
             return energy_, q_, data_, error_
 
-class FitResolutionData:
+class ResolutionDataModel:
     def __init__(self, grpfilename, data_range, max_n_gauss = 4, select_q_index = None, neutron_e0 = None, seed = 42, background_type = 'c'):
         
         self.seed = seed
@@ -136,13 +136,13 @@ class FitResolutionData:
         if select_q_index: self.q_index_ = [int(select_q_index)]
         else: self.q_index_ = [i for i in range(len(self.q_))]
 
-    def r_qe_component(self, E_, *args):
+    def R_QE_component(self, E_, *args):
         component_ = []
         for i in range(0, 3*self.max_n_gauss, 3):
             component_.append(gauss(E_, *args[i:i+3]))
         return np.array(component_)
     
-    def r_qe(self, E_, *args):
+    def R_QE(self, E_, *args):
         return np.sum(self.R_QE_component(E_, *args), axis = 0)
 
     def fit(self, max_fail_count = 20):
@@ -169,20 +169,20 @@ class FitResolutionData:
             init_gauss_p0 = np.array([])
             if self.max_n_gauss >= 1:
                 init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.3  , peak_position+init_sigma*1.0 , init_sigma*1.0     ])
-                lowerbound      = [0.      , -self.data_range  , 0.    ]
-                upperbound      = [np.inf  , self.data_range  , np.inf]
+                lowerbound      = [0.    , -self.data_range, 0.    ]
+                upperbound      = [np.inf,  self.data_range, np.inf]
             if self.max_n_gauss >= 2:
                 init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.4  , peak_position-init_sigma*0.5 , init_sigma*1.0     ])
-                lowerbound     += [0.      , -self.data_range  , 0.    ]
-                upperbound     += [np.inf  , self.data_range  , np.inf]
+                lowerbound     += [0.    , -self.data_range, 0.    ]
+                upperbound     += [np.inf,  self.data_range, np.inf]
             if self.max_n_gauss >= 3:
                 init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.2  , peak_position-init_sigma*1.0 , init_sigma*2.0 ])
-                lowerbound     += [0.      , -self.data_range  , 0.    ]
-                upperbound     += [np.inf  , self.data_range  , np.inf]
+                lowerbound     += [0.    , -self.data_range, 0.    ]
+                upperbound     += [np.inf,  self.data_range, np.inf]
             if self.max_n_gauss >= 4:
                 init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.001, peak_position-init_sigma*2.0 , init_sigma*10.0])
-                lowerbound     += [0.      , -self.data_range  , 0.    ]
-                upperbound     += [np.inf  , self.data_range  , np.inf]
+                lowerbound     += [0.    , -self.data_range, 0.    ]
+                upperbound     += [np.inf,  self.data_range, np.inf]
             if self.max_n_gauss >= 5: #now support only 4 gaussians
                 print("N/A")
                 exit()
@@ -199,7 +199,7 @@ class FitResolutionData:
                 upperbound += [np.inf   ,  np.inf]
                 const_flag = [False, False, False]*self.max_n_gauss+[False, True]
                 
-            resolution_model = CF.FitModel(function = self.R_QE)
+            resolution_model = CF.Model(function = self.R_QE)
             fail_count = 0
             while fail_count < max_fail_count:
                 try:
@@ -211,7 +211,7 @@ class FitResolutionData:
                     print("fit fail %d"%(fail_count))
                     rnd_ratio = np.random.uniform(0.001, 2.000, size = len(p0))
                     if self.background_type == 'p': rnd_ratio[-1] = 1.0
-                    p0 * = rnd_ratio
+                    p0 *= rnd_ratio
                     fail_count += 1
             if fail_count == max_fail_count: exit()
             
@@ -296,7 +296,7 @@ class FitResolutionData:
                 log_fg = (False, False)
                 plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
 
-            pt = PlotData()
+            pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
             lw_ = [0]+[2]*(1+component_.shape[0]), \
             markerstyle_ = ['o']+[None]*(1+component_.shape[0]), \
@@ -308,7 +308,7 @@ class FitResolutionData:
             pt.plot_save(plotfilename)
             pt.plot_clear()
 
-class FitQENSData:
+class QENSDataModel:
     def __init__(self, grpfilename, resolution_parameter_filename, data_range = None, neutron_e0 = None, seed = 42, background_type = 'c'):
         
         self.resolution_fitted_parameters_ = []
@@ -375,7 +375,7 @@ class FitQENSData:
                 energy_ = energy_[true_QENSdata_indices]
 
             peak_value = QENSdata_q_.max()
-            QENS_model = CF.FitModel(function = self.QENSdata_Function)
+            QENS_model = CF.Model(function = self.QENSdata_function)
             #                     A                             f       tau     beta E_center beckground
             lowerbound         = [     0,                       0,        0,       0,    -0.1,         0]
             upperbound         = [np.inf,                       1,   np.inf,       1,     0.1,    np.inf]
@@ -395,7 +395,7 @@ class FitQENSData:
                 except:
                     print("fit fail %d"%(fail_count))
                     rnd_ratio = np.random.uniform(0.001, 2.000, size = len(p0))
-                    p0 * = rnd_ratio
+                    p0 *= rnd_ratio
                     fail_count += 1
             if fail_count == 20: exit()
 
@@ -405,19 +405,19 @@ class FitQENSData:
             
             print("The fitting has converged, error weighted chi^2 = %.3e"%(self.chi2_[-1]))
 
-    def r_qe_component(self, E_, *args):
+    def R_QE_component(self, E_, *args):
         component_ = []
         for i in range(0, 3*self.max_n_gauss, 3):
             component_.append(gauss(E_, *args[i:i+3]))
         return np.array(component_)
     
-    def r_qe(self, E_, *args):
+    def R_QE(self, E_, *args):
         return np.sum(self.R_QE_component(E_, *args), axis = 0)
     
-    def f_qt(self, t_, tau, beta):
+    def F_Qt(self, t_, tau, beta):
         return kww(t_, tau, beta)
     
-    def qens_function(self, E_data_, *args):
+    def QENS_function(self, E_data_, *args):
         #name the parameters
         A = args[0]
         f = args[1]
@@ -464,8 +464,8 @@ class FitQENSData:
 
         return y_model_data_, y_ENS_data_, y_QENS_data_, y_background_data_
 
-    def qen_sdata_function(self, E_data_, *args):
-        y_model_data_, _, _, _ = self.QENS_Function(E_data_, *args)
+    def QENSdata_function(self, E_data_, *args):
+        y_model_data_, _, _, _ = self.QENS_function(E_data_, *args)
         return y_model_data_  
 
     def output_results(self):
@@ -508,7 +508,7 @@ class FitQENSData:
                 error_q_ = energy_[true_QENSdata_indices]
                 energy_ = energy_[true_QENSdata_indices]
                 
-            fity, y_ENS_data_, y_QENS_data_, y_background_data_ = self.QENS_Function(energy_, *self.fitted_parameters_[i_q])
+            fity, y_ENS_data_, y_QENS_data_, y_background_data_ = self.QENS_function(energy_, *self.fitted_parameters_[i_q])
             
             component_legend_ = ["ENS component", "QENS component"]
             if self.background_type == 'c':
@@ -531,7 +531,7 @@ class FitQENSData:
                 log_fg = (False, False)
                 plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
 
-            pt = PlotData()
+            pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
             lw_ = [0]+[2]*4, \
             markerstyle_ = ['o']+[None]*4, \
