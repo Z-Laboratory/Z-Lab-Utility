@@ -2,7 +2,7 @@
 
 This package does QENS data fitting routine that reads grp files.
 
-Dependencies of this package:
+Dependencies of this package:<br/>
   General:            numpy, matplotlib, and scipy.<br/>
   From Z-Lab-Utility: ezfft, CurveFitting.<br/>
 
