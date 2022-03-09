@@ -6,7 +6,7 @@ import QENSFit as QF
 grpfilename = "<name of your resolution data file>.grp"
 res = QF.ResolutionDataModel(grpfilename = grpfilename, data_range = 0.4, neutron_e0 = 3.32)
 res.fit()
-res.output_results() #default output file: fitting_results_ < name of your resolution data file > .txt
+res.output_results() #default output file: fitting_results_<name of your resolution data file>.txt
 res.plot_results()
 res.plot_results(log_scale = True)
 
