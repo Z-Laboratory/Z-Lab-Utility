@@ -4,17 +4,17 @@ import QENSFit as QF
 
 # example code for fitting resolution function
 grpfilename = "<name of your resolution data file>.grp"
-res = QF.ResolutionDataModel(grpfilename = grpfilename, data_range = 0.4, neutron_e0 = 3.32)
+res = QF.ResolutionDataModel(grpfilename = grpfilename, data_range = 3, neutron_e0 = 3.32)
 res.fit()
 res.output_results() #default output file: fitting_results_<name of your resolution data file>.txt
-res.plot_results()
-res.plot_results(log_scale = True)
+res.plot_results(show_errorbar = False)
+res.plot_results(log_scale=True, show_errorbar = False)
 
 # example code for fitting QENS Data
 grpfilename = "<name of your QENS data file>.grp"
 resolution_parameter_filename = "fitting_results_<name of your resolution data file>.txt"
-qens = QF.QENSDataModel(grpfilename = grpfilename, resolution_parameter_filename = resolution_parameter_filename, neutron_e0 = 3.32, data_range = 0.4)
-qens.fit(fix_elastic_contribution = 0.1)
+qens = QF.QENSDataModel(grpfilename = grpfilename, resolution_parameter_filename = resolution_parameter_filename, neutron_e0 = 3.32)
+qens.fit(const_f_elastic = 0.1, const_f_fast = 0.0)
 qens.output_results()
-qens.plot_results()
-qens.plot_results(log_scale = True)
+qens.plot_results(show_errorbar = False)
+qens.plot_results(log_scale = True, show_errorbar = False)

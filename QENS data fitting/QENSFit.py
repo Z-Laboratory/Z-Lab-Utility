@@ -128,8 +128,10 @@ class ResolutionDataModel:
         self.grpfilename = grpfilename
 
         self.energy_, self.q_, self.resolution_, self.error_ = grpFileReader(self.grpfilename).read()
-        left  = np.where(self.energy_ >= (-self.data_range if self.left_or_right != "right" else 0))[0][0]
-        right = np.where(self.energy_ >  ( self.data_range if self.left_or_right != "left"  else 0))[0][0]
+        left  = np.where(self.energy_ >= (-self.data_range if self.left_or_right != "right" else 0))[0]
+        right = np.where(self.energy_ >  ( self.data_range if self.left_or_right != "left"  else 0))[0]
+        left  = left[0]  if len(left)  > 0 else 0
+        right = right[0] if len(right) > 0 else -1
         self.resolution_ = self.resolution_[:, left:right:1]
         self.error_ = self.error_[:, left:right:1]
         self.energy_ = self.energy_[left:right:1]
@@ -218,6 +220,8 @@ class ResolutionDataModel:
             self.fitted_parameters_.append(np.copy(popt))
             self.fitted_parameters_error_.append(np.copy(perr))
             self.chi2_.append(np.mean(((resolution_q_-fity)/error_q_)**2/np.sum(1.0/error_q_**2))**0.5)
+            
+            print("The fitting has converged, the error-weighted chi^2 = %.3e"%(self.chi2_[-1]))
 
     def output_results(self):
         fout = open("fitting_results_%s.txt"%(self.grpfilename[:-4]), "w")
@@ -258,11 +262,11 @@ class ResolutionDataModel:
                 for j in self.fitted_parameters_error_[i_q][-2:]: fout.write("%17.10e\t"%j)
                 fout.write("\n")
             
-            fout.write("error weighted chi^2 = %f\n"%(self.chi2_[i_q]))
+            fout.write("error-weighted chi^2 = %f\n"%(self.chi2_[i_q]))
             fout.write("-"*133+"\n")
         fout.close()
     
-    def plot_results(self, log_scale = False):
+    def plot_results(self, log_scale = False, show_errorbar = True):
         for i_q, q_index in enumerate(self.q_index_):
             resolution_q_ = self.resolution_[q_index]
             error_q_ = self.error_[q_index]
@@ -284,7 +288,10 @@ class ResolutionDataModel:
 
             y_ = np.vstack((resolution_q_, fity, component_))
             x_ = np.tile(energy_, (y_.shape[0], 1))
-            yerr_ = [error_q_]+[[] for i in range(y_.shape[0]-1)]
+            if show_errorbar:
+                yerr_ = [error_q_] + [[] for i in range(y_.shape[0]-1)]
+            else:
+                yerr_ = []
 
             peak_value = resolution_q_.max()
             if log_scale:
@@ -339,8 +346,10 @@ class QENSDataModel:
         self.grpfilename = grpfilename
 
         self.energy_, self.q_, self.QENSdata_, self.error_ = grpFileReader(self.grpfilename).read()
-        left  = np.where(self.energy_ >= (-self.data_range if self.left_or_right != "right" else 0))[0][0]
-        right = np.where(self.energy_ >  ( self.data_range if self.left_or_right != "left"  else 0))[0][0]
+        left  = np.where(self.energy_ >= (-self.data_range if self.left_or_right != "right" else 0))[0]
+        right = np.where(self.energy_ >  ( self.data_range if self.left_or_right != "left"  else 0))[0]
+        left  = left[0]  if len(left)  > 0 else 0
+        right = right[0] if len(right) > 0 else -1
         self.QENSdata_ = self.QENSdata_[:, left:right:1]
         self.error_ = self.error_[:, left:right:1]
         self.energy_ = self.energy_[left:right:1]
@@ -357,7 +366,7 @@ class QENSDataModel:
         for q_index in self.q_index_:
             self.fitted_R_QE_symmetric_.append(self.R_QE(self.E_symmetric_, *self.resolution_fitted_parameters_[q_index]))
 
-    def fit(self, fix_elastic_contribution = -1, max_fail_count = 20):
+    def fit(self, const_f_elastic = -1, const_f_fast = -1, max_fail_count = 20):
         self.fitted_parameters_ = []
         self.fitted_parameters_error_ = []
         self.chi2_ = []
@@ -376,16 +385,33 @@ class QENSDataModel:
 
             peak_value = QENSdata_q_.max()
             QENS_model = CF.Model(function = self.QENSdata_function)
-            #                     A                             f       tau     beta E_center beckground
-            lowerbound         = [     0,                       0,        0,       0,    -0.1,         0]
-            upperbound         = [np.inf,                       1,   np.inf,       1,     0.1,    np.inf]
-         
-            if fix_elastic_contribution == -1:         
-                const_flag     = [False,                    False,    False,   False,   False,     False]
-                p0             = [    1,                      0.5,      100,       1,       0,     0.001]
-            else:             
-                const_flag     = [False,                     True,    False,   False,   False,     False]
-                p0             = [    1, fix_elastic_contribution,      100,       1,       0,     0.001]
+            #                      A                             f   f_fast   tau_fast      tau     beta E_center beckground
+            lowerbound          = [     0,                       0,       0,         0,       0,       0,    -0.1,         0]
+            upperbound          = [np.inf,                       1,       1,    np.inf,  np.inf,       1,     0.1,    np.inf]
+            
+            const_flag          = [False]
+            p0                  = [    1]
+
+            if const_f_elastic == -1: 
+                const_flag     += [False]
+                p0             += [  0.5]
+            else: 
+                const_flag     += [True]
+                p0             += [const_f_elastic]
+             
+            if const_f_fast == -1:
+                const_flag     += [       False, False]
+                p0             += [         0.5,   0.5]
+            else: 
+                const_flag     += [        True]
+                p0             += [const_f_fast]
+                if const_f_fast == 0:
+                    const_flag += [ True]
+                    p0         += [    1]
+            
+            const_flag         += [False, False, False, False]
+            p0                 += [  100,     1,     0, 0.001]
+                
             fail_count = 0
             while fail_count < 20:
                 try:
@@ -403,7 +429,7 @@ class QENSDataModel:
             self.fitted_parameters_error_.append(np.copy(perr))
             self.chi2_.append(np.mean(((QENSdata_q_-fity)/error_q_)**2/np.sum(1.0/error_q_**2))**0.5)
             
-            print("The fitting has converged, error weighted chi^2 = %.3e"%(self.chi2_[-1]))
+            print("The fitting has converged, the error-weighted chi^2 = %.3e"%(self.chi2_[-1]))
 
     def R_QE_component(self, E_, *args):
         component_ = []
@@ -414,17 +440,19 @@ class QENSDataModel:
     def R_QE(self, E_, *args):
         return np.sum(self.R_QE_component(E_, *args), axis = 0)
     
-    def F_Qt(self, t_, tau, beta):
-        return kww(t_, tau, beta)
+    def F_Qt(self, t_, f_fast, tau_fast, tau, beta):
+        return f_fast * np.exp(-t_/tau_fast) + (1-f_fast) * kww(t_, tau, beta)
     
     def QENS_function(self, E_data_, *args):
         #name the parameters
         A = args[0]
-        f = args[1]
-        tau = args[2] * 1.519
-        beta = args[3]
-        E_center = args[4]
-        background = args[5]
+        f_elastic = args[1]
+        f_fast = args[2]
+        tau_fast = args[3] * 1.519
+        tau = args[4] * 1.519
+        beta = args[5]
+        E_center = args[6]
+        background = args[7]
 
         #load pre-calculated time and energy axes
         t_ = self.t_
@@ -435,7 +463,8 @@ class QENSDataModel:
         R_QE_symmetric_ = self.fitted_R_QE_symmetric_[self.now_fitting_q_index]
         
         #compute F(Q, T) (KWW function)
-        F_Qt_ = self.F_Qt(t_, tau, beta)
+        #F_Qt_ = self.F_Qt(t_, tau, beta)
+        F_Qt_ = self.F_Qt(t_, f_fast, tau_fast, tau, beta)
         F_Qt_symmetric_ = np.concatenate((np.flip(F_Qt_[1:]), F_Qt_))
         
         #compute R(Q, T)
@@ -450,8 +479,8 @@ class QENSDataModel:
         S_QE_conv_R_QE_symmetric_ = np.real(S_QE_conv_R_QE_symmetric_)
 
         #compute all the terms
-        y_ENS_ = A * f * R_QE_symmetric_
-        y_QENS_ = A * (1.0-f) * S_QE_conv_R_QE_symmetric_
+        y_ENS_ = A * f_elastic * R_QE_symmetric_
+        y_QENS_ = A * (1.0-f_elastic) * S_QE_conv_R_QE_symmetric_
         y_background_ = constant(E_symmetric_, background)
         #y_model_ = y_ENS_ + y_QENS_ + y_background_
         
@@ -476,27 +505,27 @@ class QENSDataModel:
         fout.write("Set data range: |%s| (meV)\nActual data range: %s ~ %s (meV)\n"%(self.data_range, self.energy_[0], self.energy_[-1]))
         fout.write("\nFitting Results\n")
 
-        fout.write("Parameter\t\t%17s\t%17s\t%17s\t%17s\t%17s"%("A", "f", "tau", "beta", "E_center"))
+        fout.write("Parameter\t\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s"%("A", "f_elastic", "f_fast", "tau_fast", "tau", "beta", "E_center"))
         if self.background_type == 'c': fout.write("\t%17s"%("c"))
         elif self.background_type == 'p': fout.write("\t%17s\t%17s"%("b", "e0"))
-        fout.write("\t\t%17s\t%17s\t%17s\t%17s\t%17s"%("A_e", "f_e", "tau_e", "beta_e", "E_center_e"))
+        fout.write("\t\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s"%("A_e", "f_elastic_e", "f_fast_e", "tau_fast_e", "tau_e", "beta_e", "E_center_e"))
         if self.background_type == 'c': fout.write("\t%17s"%("c_e"))
         elif self.background_type == 'p': fout.write("\t%17s\t%17s"%("b_e", "e0_e"))
         fout.write("\n")
 
         for i_q, q_index in enumerate(self.q_index_):
             group_str = "Group#: %s, q = %s Angstrom"%(q_index, self.q_[q_index])
-            fout.write(group_str+"-"*(257-len(group_str))+"\n")
+            fout.write(group_str+"-"*(337-len(group_str))+"\n")
             fout.write("parameter\t\t")
             for j in self.fitted_parameters_[i_q]: fout.write("%17.10e\t"%j)
             fout.write("\t")
             for j in self.fitted_parameters_error_[i_q]: fout.write("%17.10e\t"%j)
             fout.write("\n")
-            fout.write("error weighted chi^2 = %f\n"%(self.chi2_[i_q]))
-            fout.write("-"*257+"\n")
+            fout.write("error-weighted chi^2 = %f\n"%(self.chi2_[i_q]))
+            fout.write("-"*337+"\n")
         fout.close()
 
-    def plot_results(self, log_scale = False):
+    def plot_results(self, log_scale = False, show_errorbar = True):
         for i_q, q_index in enumerate(self.q_index_):
             self.now_fitting_q_index = q_index
             QENSdata_q_ = self.QENSdata_[q_index]
@@ -519,7 +548,10 @@ class QENSDataModel:
 
             y_ = np.vstack((QENSdata_q_, fity, y_ENS_data_, y_QENS_data_, y_background_data_))
             x_ = np.tile(energy_, (y_.shape[0], 1))
-            yerr_ = [error_q_]+[[] for i in range(y_.shape[0]-1)]
+            if show_errorbar:
+                yerr_ = [error_q_] + [[] for i in range(y_.shape[0]-1)]
+            else:
+                yerr_ = []
 
             peak_value = QENSdata_q_.max()
             if log_scale:
