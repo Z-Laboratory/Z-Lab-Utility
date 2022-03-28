@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import ezfft
@@ -121,7 +122,7 @@ class ResolutionDataModel:
         self.seed = seed
         np.random.seed(self.seed)
         self.data_range = data_range
-        self.max_n_gauss = 4
+        self.max_n_gauss = max_n_gauss
         self.neutron_e0 = neutron_e0 if neutron_e0 else 'N/A'
         self.left_or_right = 'both'
         self.background_type = background_type #background_type: 'c' = constant, 'p' = power law
@@ -132,6 +133,7 @@ class ResolutionDataModel:
         right = np.where(self.energy_ >  ( self.data_range if self.left_or_right != "left"  else 0))[0]
         left  = left[0]  if len(left)  > 0 else 0
         right = right[0] if len(right) > 0 else -1
+
         self.resolution_ = self.resolution_[:, left:right:1]
         self.error_ = self.error_[:, left:right:1]
         self.energy_ = self.energy_[left:right:1]
@@ -142,7 +144,10 @@ class ResolutionDataModel:
         component_ = []
         for i in range(0, 3*self.max_n_gauss, 3):
             component_.append(gauss(E_, *args[i:i+3]))
-        return np.array(component_)
+        background = constant(E_, *args[-1:]) if self.background_type == 'c' else power(E_, *args[-2:])
+        component_ = np.array(component_)
+        component_ = np.vstack((component_,background))
+        return component_
     
     def R_QE(self, E_, *args):
         return np.sum(self.R_QE_component(E_, *args), axis = 0)
@@ -156,11 +161,10 @@ class ResolutionDataModel:
             resolution_q_ = self.resolution_[q_index]
             error_q_ = self.error_[q_index]
             energy_ = self.energy_
-            if resolution_q_.min() <= 0.0 :
-                true_resolution_indices = np.where(resolution_q_ > 0)[0]
-                resolution_q_ = resolution_q_[true_resolution_indices]
-                error_q_ = error_q_[true_resolution_indices]
-                energy_ = energy_[true_resolution_indices]
+            true_resolution_indices = np.where(resolution_q_ > 0)
+            resolution_q_ = resolution_q_[true_resolution_indices]
+            error_q_ = error_q_[true_resolution_indices]
+            energy_ = energy_[true_resolution_indices]
 
             peak_value = resolution_q_.max()
             peak_position = self.energy_[np.where(resolution_q_ == peak_value)[0][0]]
@@ -169,27 +173,29 @@ class ResolutionDataModel:
             init_sigma = fwhm/2.355
             init_f = peak_value*init_sigma*(2.0*np.pi)**0.5
             init_gauss_p0 = np.array([])
+            peak_position_lowerbound = energy_.min()
+            peak_position_upperbound = energy_.max()
             if self.max_n_gauss >= 1:
-                init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.3  , peak_position+init_sigma*1.0 , init_sigma*1.0     ])
-                lowerbound      = [0.    , -self.data_range, 0.    ]
-                upperbound      = [np.inf,  self.data_range, np.inf]
+                init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.4  , peak_position+init_sigma*0.0 , init_sigma*1.0     ])
+                lowerbound      = [0.    , peak_position_lowerbound, 0.    ]
+                upperbound      = [np.inf, peak_position_upperbound, np.inf]
             if self.max_n_gauss >= 2:
-                init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.4  , peak_position-init_sigma*0.5 , init_sigma*1.0     ])
-                lowerbound     += [0.    , -self.data_range, 0.    ]
-                upperbound     += [np.inf,  self.data_range, np.inf]
+                init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.3  , peak_position-init_sigma*0.2 , init_sigma*1.5     ])
+                lowerbound     += [0.    , peak_position_lowerbound, 0.    ]
+                upperbound     += [np.inf, peak_position_upperbound, np.inf]
             if self.max_n_gauss >= 3:
                 init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.2  , peak_position-init_sigma*1.0 , init_sigma*2.0 ])
-                lowerbound     += [0.    , -self.data_range, 0.    ]
-                upperbound     += [np.inf,  self.data_range, np.inf]
+                lowerbound     += [0.    , peak_position_lowerbound, 0.    ]
+                upperbound     += [np.inf, peak_position_upperbound, np.inf]
             if self.max_n_gauss >= 4:
-                init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.001, peak_position-init_sigma*2.0 , init_sigma*10.0])
-                lowerbound     += [0.    , -self.data_range, 0.    ]
-                upperbound     += [np.inf,  self.data_range, np.inf]
+                init_gauss_p0   = np.append(init_gauss_p0, [init_f*0.01, peak_position-init_sigma*2.0 , init_sigma*10.0])
+                lowerbound     += [0.    , peak_position_lowerbound, 0.    ]
+                upperbound     += [np.inf, peak_position_upperbound, np.inf]
             if self.max_n_gauss >= 5: #now support only 4 gaussians
                 print("N/A")
                 exit()
             if self.background_type == 'c':
-                init_c = 0.0001
+                init_c = 0.001
                 p0 = np.append(init_gauss_p0, [init_c])
                 lowerbound += [0.    ]
                 upperbound += [np.inf]
@@ -223,8 +229,9 @@ class ResolutionDataModel:
             
             print("The fitting has converged, the error-weighted chi^2 = %.3e"%(self.chi2_[-1]))
 
-    def output_results(self):
-        fout = open("fitting_results_%s.txt"%(self.grpfilename[:-4]), "w")
+    def output_results(self, output_dir = "."):
+        if not os.path.isdir(output_dir): os.makedirs(output_dir)
+        fout = open(output_dir + "/fitting_results_%s.txt"%(self.grpfilename[:-4]), "w")
         fout.write("Input file name: %s\n"%(self.grpfilename))
         fout.write("Incident neutron energy: %s meV\n"%(self.neutron_e0))
         fout.write("Seed: %s\n"%(self.seed))
@@ -266,17 +273,17 @@ class ResolutionDataModel:
             fout.write("-"*133+"\n")
         fout.close()
     
-    def plot_results(self, log_scale = False, show_errorbar = True):
+    def plot_results(self, output_dir = ".", log_scale = False, show_errorbar = True):
+        if not os.path.isdir(output_dir): os.makedirs(output_dir)
         for i_q, q_index in enumerate(self.q_index_):
             resolution_q_ = self.resolution_[q_index]
             error_q_ = self.error_[q_index]
             energy_ = self.energy_
-            if resolution_q_.min() <= 0.0:
-                true_resolution_indices = np.where(resolution_q_ > 0)[0]
-                resolution_q_ = resolution_q_[true_resolution_indices]
-                error_q_ = energy_[true_resolution_indices]
-                energy_ = energy_[true_resolution_indices]
-
+            true_resolution_indices = np.where(resolution_q_ > 0)
+            resolution_q_ = resolution_q_[true_resolution_indices]
+            error_q_ = energy_[true_resolution_indices]
+            energy_ = energy_[true_resolution_indices]
+            
             component_ = self.R_QE_component(energy_, *self.fitted_parameters_[i_q])
             fity = self.R_QE(energy_, *self.fitted_parameters_[i_q])
             component_legend_ = ["Gaussian component %s"%(i+1) for i in range(self.max_n_gauss)]
@@ -295,14 +302,14 @@ class ResolutionDataModel:
 
             peak_value = resolution_q_.max()
             if log_scale:
-                ylim = (1e-4, peak_value*1.2)
+                ylim = (1e-4, 12)
                 log_fg = (False, True)
                 plotfilename = "fitting_plot_%s_%d-log.png"%(self.grpfilename[:-4], q_index)
             else:
-                ylim = (0.0, peak_value*1.2)
+                ylim = (0.0, 12)
                 log_fg = (False, False)
                 plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
-
+            
             pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
             lw_ = [0]+[2]*(1+component_.shape[0]), \
@@ -312,7 +319,7 @@ class ResolutionDataModel:
             legend_fontsize = 12, \
             log_fg = log_fg, \
             legend_ = ["Resolution Spectra"]+[total_legend_]+component_legend_)
-            pt.plot_save(plotfilename)
+            pt.plot_save(output_dir + "/" + plotfilename)
             pt.plot_clear()
 
 class QENSDataModel:
@@ -325,7 +332,7 @@ class QENSDataModel:
                 if "Maximum number of gaussians" in aline:
                     self.max_n_gauss = int(aline.strip().split()[-1])
                 elif "Set data range" in aline:
-                    self.data_range = float(aline.strip().split('|')[1])
+                    self.resolution_data_range = float(aline.strip().split('|')[1])
                 elif "Group#" in aline:
                     self.q_index_.append(int(aline.strip().split()[1][:-1]))
                     self.resolution_fitted_parameters_.append([])
@@ -336,6 +343,8 @@ class QENSDataModel:
                         else:
                             self.resolution_fitted_parameters_[-1] = np.append(self.resolution_fitted_parameters_[-1], [float(i) for i in linelist[1:3+1]])
         if data_range: self.data_range = data_range
+        else: self.data_range = self.resolution_data_range
+
         self.delta_E = 0.002
         self.E_max = self.data_range*10 # meV
         self.seed = seed
@@ -354,19 +363,19 @@ class QENSDataModel:
         self.error_ = self.error_[:, left:right:1]
         self.energy_ = self.energy_[left:right:1]
 
-        #pre-calculate time and energy axes
+        #compute time and energy axes
         NFFT = np.floor(self.E_max / self.delta_E) + 1
         delta_t = 2 * np.pi / ( 2 * self.E_max )
         self.t_ = np.arange(NFFT - 1) * delta_t
         self.t_symmetric_ = np.concatenate((-np.flip(self.t_[1:]), self.t_))
         self.E_symmetric_, _ = ezfft.ezifft(self.t_symmetric_, np.zeros_like(self.t_symmetric_))
 
-        #pre-calculate fitted R(Q, E)
+        #compute fitted R(Q, E)
         self.fitted_R_QE_symmetric_ = []
         for q_index in self.q_index_:
             self.fitted_R_QE_symmetric_.append(self.R_QE(self.E_symmetric_, *self.resolution_fitted_parameters_[q_index]))
 
-    def fit(self, const_f_elastic = -1, const_f_fast = -1, max_fail_count = 20):
+    def fit(self, const_f_elastic = None, const_f_fast = None, const_tau_fast = None, const_beta = None, const_background = None, max_fail_count = 20):
         self.fitted_parameters_ = []
         self.fitted_parameters_error_ = []
         self.chi2_ = []
@@ -377,41 +386,73 @@ class QENSDataModel:
             QENSdata_q_ = self.QENSdata_[q_index]
             error_q_ = self.error_[q_index]
             energy_ = self.energy_
-            if QENSdata_q_.min() <= 0.0 :
-                true_QENSdata_indices = np.where(QENSdata_q_ > 0)[0]
-                QENSdata_q_ = QENSdata_q_[true_QENSdata_indices]
-                error_q_ = error_q_[true_QENSdata_indices]
-                energy_ = energy_[true_QENSdata_indices]
+            true_QENSdata_indices = np.where(QENSdata_q_ > 0)
+            QENSdata_q_ = QENSdata_q_[true_QENSdata_indices]
+            error_q_ = error_q_[true_QENSdata_indices]
+            energy_ = energy_[true_QENSdata_indices]
 
             peak_value = QENSdata_q_.max()
             QENS_model = CF.Model(function = self.QENSdata_function)
-            #                      A                             f   f_fast   tau_fast      tau     beta E_center beckground
-            lowerbound          = [     0,                       0,       0,         0,       0,       0,    -0.1,         0]
-            upperbound          = [np.inf,                       1,       1,    np.inf,  np.inf,       1,     0.1,    np.inf]
+            #                           A  f  f_fast  tau_fast     tau  beta       E_center  background
+            lowerbound          = [     0, 0,      0,        0,      0,    0, energy_.min(),         0]
+            upperbound          = [np.inf, 1,      1,   np.inf, np.inf,    1, energy_.max(),    np.inf]
             
+            #A
             const_flag          = [False]
             p0                  = [    1]
 
-            if const_f_elastic == -1: 
-                const_flag     += [False]
-                p0             += [  0.5]
-            else: 
+            if const_f_elastic != None: 
                 const_flag     += [True]
                 p0             += [const_f_elastic]
-             
-            if const_f_fast == -1:
-                const_flag     += [       False, False]
-                p0             += [         0.5,   0.5]
             else: 
+                const_flag     += [False]
+                p0             += [  0.5]
+            
+            if const_f_fast != None:
                 const_flag     += [        True]
                 p0             += [const_f_fast]
                 if const_f_fast == 0:
-                    const_flag += [ True]
+                    const_flag += [True]
+                    p0         += [   1]
+                elif const_tau_fast != None:
+                    const_flag += [True]
+                    p0         += [const_tau_fast]
+                else:
+                    const_flag += [False]
                     p0         += [    1]
+            else:
+                const_flag     += [       False]
+                p0             += [         0.05]
+                if const_tau_fast != None:
+                    const_flag += [True]
+                    p0         += [const_tau_fast]
+                else:
+                    const_flag += [False]
+                    p0         += [    1]
+
+            #tau
+            const_flag         += [False]
+            p0                 += [  100]
             
-            const_flag         += [False, False, False, False]
-            p0                 += [  100,     1,     0, 0.001]
+            #beta
+            if const_beta != None:
+                const_flag     += [True]
+                p0             += [const_beta]
+            else:
+                const_flag     += [False]
+                p0             += [    0.5]
                 
+            #E_center, background
+            const_flag         += [False]
+            p0                 += [    0]
+
+            if const_background != None:
+                const_flag         += [True]
+                p0                 += [const_background]
+            else:
+                const_flag         += [False]
+                p0                 += [0.001]
+            
             fail_count = 0
             while fail_count < 20:
                 try:
@@ -421,6 +462,7 @@ class QENSDataModel:
                 except:
                     print("fit fail %d"%(fail_count))
                     rnd_ratio = np.random.uniform(0.001, 2.000, size = len(p0))
+                    rnd_ratio = np.array([a if const_flag[i] == False else 1.0 for i, a in enumerate(rnd_ratio)])
                     p0 *= rnd_ratio
                     fail_count += 1
             if fail_count == 20: exit()
@@ -435,13 +477,14 @@ class QENSDataModel:
         component_ = []
         for i in range(0, 3*self.max_n_gauss, 3):
             component_.append(gauss(E_, *args[i:i+3]))
-        return np.array(component_)
+        component_ = np.array(component_)
+        return component_
     
     def R_QE(self, E_, *args):
         return np.sum(self.R_QE_component(E_, *args), axis = 0)
     
-    def F_Qt(self, t_, f_fast, tau_fast, tau, beta):
-        return f_fast * np.exp(-t_/tau_fast) + (1-f_fast) * kww(t_, tau, beta)
+    def F_Qt_component(self, t_, f_fast, tau_fast, tau, beta):
+        return np.vstack((f_fast * np.exp(-t_/tau_fast), (1.0 - f_fast) * kww(t_, tau, beta)))
     
     def QENS_function(self, E_data_, *args):
         #name the parameters
@@ -458,51 +501,58 @@ class QENSDataModel:
         t_ = self.t_
         t_symmetric_ = self.t_symmetric_
         E_symmetric_ = self.E_symmetric_
-
+        
         #load pre-calculated fitted R(Q, E)
         R_QE_symmetric_ = self.fitted_R_QE_symmetric_[self.now_fitting_q_index]
         
-        #compute F(Q, T) (KWW function)
+        #compute F(Q, t) (fast component, KWW function)
         #F_Qt_ = self.F_Qt(t_, tau, beta)
-        F_Qt_ = self.F_Qt(t_, f_fast, tau_fast, tau, beta)
-        F_Qt_symmetric_ = np.concatenate((np.flip(F_Qt_[1:]), F_Qt_))
+        F_Qt_component_ = self.F_Qt_component(t_, f_fast, tau_fast, tau, beta)
+        F_Qt_component_symmetric_ = np.concatenate((np.flip(F_Qt_component_[:, 1:], axis = 1), F_Qt_component_), axis = 1)
         
-        #compute R(Q, T)
+        #compute R(Q, t)
         _, R_Qt_symmetric_ = ezfft.ezfft(E_symmetric_, R_QE_symmetric_)
         
-        #compute F(Q, T)R(Q, T) and it's FT
-        F_Qt_times_R_Qt_symmetric_ = F_Qt_symmetric_ * R_Qt_symmetric_
-        _, S_QE_conv_R_QE_symmetric_ = ezfft.ezifft(t_symmetric_, F_Qt_times_R_Qt_symmetric_)
+        #compute F(Q, t)R(Q, t) and it's FT
+        F_Qt_component_times_R_Qt_symmetric_ = F_Qt_component_symmetric_ * R_Qt_symmetric_
+
+        _, tmp0 = ezfft.ezifft(t_symmetric_, F_Qt_component_times_R_Qt_symmetric_[0])
+        _, tmp1 = ezfft.ezifft(t_symmetric_, F_Qt_component_times_R_Qt_symmetric_[1])
+        S_QE_component_conv_R_QE_symmetric_ = np.vstack((tmp0,tmp1))
 
         #take only the real part
         R_QE_symmetric_ = np.real(R_QE_symmetric_)
-        S_QE_conv_R_QE_symmetric_ = np.real(S_QE_conv_R_QE_symmetric_)
+        S_QE_component_conv_R_QE_symmetric_ = np.real(S_QE_component_conv_R_QE_symmetric_)
 
         #compute all the terms
         y_ENS_ = A * f_elastic * R_QE_symmetric_
-        y_QENS_ = A * (1.0-f_elastic) * S_QE_conv_R_QE_symmetric_
+        y_QENS_component_ = A * (1.0-f_elastic) * S_QE_component_conv_R_QE_symmetric_
         y_background_ = constant(E_symmetric_, background)
-        #y_model_ = y_ENS_ + y_QENS_ + y_background_
         
         #interpolate all the terms at data point
         E_symmetric_after_shift_ = E_symmetric_ + E_center
         y_ENS_data_ = np.interp(E_data_, E_symmetric_after_shift_, y_ENS_)
-        y_QENS_data_ = np.interp(E_data_, E_symmetric_after_shift_, y_QENS_)
+        y_QENS_component_data_ = np.interp(E_data_, E_symmetric_after_shift_, y_QENS_component_[0])
+        for tmp in y_QENS_component_[1:]:
+            s = np.interp(E_data_, E_symmetric_after_shift_, tmp)
+            y_QENS_component_data_ = np.vstack((y_QENS_component_data_, s))
         y_background_data_ = np.interp(E_data_, E_symmetric_after_shift_, y_background_)
-        y_model_data_ = y_ENS_data_ + y_QENS_data_ + y_background_data_
-
-        return y_model_data_, y_ENS_data_, y_QENS_data_, y_background_data_
+        y_model_data_ = y_ENS_data_ + np.sum(y_QENS_component_data_, axis = 0) + y_background_data_
+        
+        return y_model_data_, y_ENS_data_, y_QENS_component_data_, y_background_data_
 
     def QENSdata_function(self, E_data_, *args):
         y_model_data_, _, _, _ = self.QENS_function(E_data_, *args)
         return y_model_data_  
 
-    def output_results(self):
-        fout = open("fitting_results_%s.txt"%(self.grpfilename[:-4]), "w")
+    def output_results(self, output_dir = "."):
+        if not os.path.isdir(output_dir): os.makedirs(output_dir)
+        fout = open(output_dir + "/fitting_results_%s.txt"%(self.grpfilename[:-4]), "w")
         fout.write("Input file name: %s\n"%(self.grpfilename))
         fout.write("Incident neutron energy: %s meV\n"%(self.neutron_e0))
         fout.write("Seed: %s\n"%(self.seed))
         fout.write("Set data range: |%s| (meV)\nActual data range: %s ~ %s (meV)\n"%(self.data_range, self.energy_[0], self.energy_[-1]))
+        fout.write("Resolution data range: |%s| (meV)\n"%(self.resolution_data_range))
         fout.write("\nFitting Results\n")
 
         fout.write("Parameter\t\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s"%("A", "f_elastic", "f_fast", "tau_fast", "tau", "beta", "E_center"))
@@ -525,29 +575,32 @@ class QENSDataModel:
             fout.write("-"*337+"\n")
         fout.close()
 
-    def plot_results(self, log_scale = False, show_errorbar = True):
+    def plot_results(self, output_dir = ".", log_scale = False, show_errorbar = True):
+        if not os.path.isdir(output_dir): os.makedirs(output_dir)
         for i_q, q_index in enumerate(self.q_index_):
             self.now_fitting_q_index = q_index
             QENSdata_q_ = self.QENSdata_[q_index]
             error_q_ = self.error_[q_index]
             energy_ = self.energy_
-            if QENSdata_q_.min() <= 0.0:
-                true_QENSdata_indices = np.where(QENSdata_q_ > 0)[0]
-                QENSdata_q_ = QENSdata_q_[true_QENSdata_indices]
-                error_q_ = energy_[true_QENSdata_indices]
-                energy_ = energy_[true_QENSdata_indices]
-                
-            fity, y_ENS_data_, y_QENS_data_, y_background_data_ = self.QENS_function(energy_, *self.fitted_parameters_[i_q])
-            
-            component_legend_ = ["ENS component", "QENS component"]
-            if self.background_type == 'c':
-                component_legend_ += ["Constant Background"]
-            else:
-                component_legend_ += ["Power Law Background"]
-            total_legend_ = "Fitted Curve"
+            true_QENSdata_indices = np.where(QENSdata_q_ > 0)
+            QENSdata_q_ = QENSdata_q_[true_QENSdata_indices]
+            error_q_ = energy_[true_QENSdata_indices]
+            energy_ = energy_[true_QENSdata_indices]
 
-            y_ = np.vstack((QENSdata_q_, fity, y_ENS_data_, y_QENS_data_, y_background_data_))
+            fity, y_ENS_data_, y_QENS_component_data_, y_background_data_ = self.QENS_function(energy_, *self.fitted_parameters_[i_q])
+            
+            legend_ = ["QENS Spectra", "Fitted Curve", "ENS component", "QENS(fast) component", "QENS(KWW) component"]
+            if self.background_type == 'c':
+                legend_.append("Constant Background")
+            else:
+                legend_.append("Power Law Background")
+            legend_.append("Resolution (%s meV)"%(self.resolution_data_range))
+            
+            R_QE_symmetric_data_ = np.interp(energy_, self.E_symmetric_, self.fitted_R_QE_symmetric_[self.now_fitting_q_index])
+            y_ = np.vstack((QENSdata_q_, fity, y_ENS_data_, y_QENS_component_data_, y_background_data_, R_QE_symmetric_data_))
             x_ = np.tile(energy_, (y_.shape[0], 1))
+
+            
             if show_errorbar:
                 yerr_ = [error_q_] + [[] for i in range(y_.shape[0]-1)]
             else:
@@ -555,22 +608,22 @@ class QENSDataModel:
 
             peak_value = QENSdata_q_.max()
             if log_scale:
-                ylim = (1e-4, peak_value*1.2)
+                ylim = (1e-4, 12)
                 log_fg = (False, True)
                 plotfilename = "fitting_plot_%s_%d-log.png"%(self.grpfilename[:-4], q_index)
             else:
-                ylim = (0.0, peak_value*1.2)
+                ylim = (0.0, 12)
                 log_fg = (False, False)
                 plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
 
             pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
-            lw_ = [0]+[2]*4, \
-            markerstyle_ = ['o']+[None]*4, \
-            linestyle_ = ['-']*2+[':']*3, \
+            lw_ = [0]+[2]*(len(y_)-1), \
+            markerstyle_ = ['o']+[None]*(len(y_)-1), \
+            linestyle_ = ['-']*2+[':']*(len(y_)-3)+['-.'], \
             ylim = ylim, xlabel = r'$E$ (meV)', ylabel = r'$intensity$ (A.U.)', \
             legend_fontsize = 12, \
             log_fg = log_fg, \
-            legend_ = ["QENS Spectra"]+[total_legend_]+component_legend_)
-            pt.plot_save(plotfilename)
+            legend_ = legend_)
+            pt.plot_save(output_dir + "/" + plotfilename)
             pt.plot_clear()
