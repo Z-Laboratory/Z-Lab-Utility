@@ -137,6 +137,9 @@ class ResolutionDataModel:
         self.resolution_ = self.resolution_[:, left:right:1]
         self.error_ = self.error_[:, left:right:1]
         self.energy_ = self.energy_[left:right:1]
+        for q_index in range(len(self.resolution_)):
+            self.error_[q_index] /= np.max(self.resolution_[q_index])
+            self.resolution_[q_index] /= np.max(self.resolution_[q_index])
         if select_q_index: self.q_index_ = [int(select_q_index)]
         else: self.q_index_ = [i for i in range(len(self.q_))]
 
@@ -152,7 +155,7 @@ class ResolutionDataModel:
     def R_QE(self, E_, *args):
         return np.sum(self.R_QE_component(E_, *args), axis = 0)
 
-    def fit(self, max_fail_count = 20):
+    def fit(self, max_fail_count = 20, weighted_with_error = True):
         self.fitted_parameters_ = []
         self.fitted_parameters_error_ = []
         self.chi2_ = []
@@ -211,7 +214,7 @@ class ResolutionDataModel:
             fail_count = 0
             while fail_count < max_fail_count:
                 try:
-                    fity, popt, perr = resolution_model.fit_transform(xdata = energy_, ydata = resolution_q_, yerr = error_q_, \
+                    fity, popt, perr = resolution_model.fit_transform(xdata = energy_, ydata = resolution_q_, yerr = error_q_ if weighted_with_error == True else None,\
                     p0 = p0, bounds = [lowerbound, upperbound], \
                     const_flag = [False, False, False]*self.max_n_gauss+[False, True] if self.background_type == 'p' else None)
                     break
@@ -302,11 +305,11 @@ class ResolutionDataModel:
 
             peak_value = resolution_q_.max()
             if log_scale:
-                ylim = (1e-4, 12)
+                ylim = (1e-4, 10)
                 log_fg = (False, True)
                 plotfilename = "fitting_plot_%s_%d-log.png"%(self.grpfilename[:-4], q_index)
             else:
-                ylim = (0.0, 12)
+                ylim = (0.0, 1.1)
                 log_fg = (False, False)
                 plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
             
@@ -362,6 +365,9 @@ class QENSDataModel:
         self.QENSdata_ = self.QENSdata_[:, left:right:1]
         self.error_ = self.error_[:, left:right:1]
         self.energy_ = self.energy_[left:right:1]
+        for q_index in range(len(self.QENSdata_)):
+             self.error_[q_index] /= np.max(self.QENSdata_[q_index])
+             self.QENSdata_[q_index] /= np.max(self.QENSdata_[q_index])
 
         #compute time and energy axes
         NFFT = np.floor(self.E_max / self.delta_E) + 1
@@ -375,7 +381,7 @@ class QENSDataModel:
         for q_index in self.q_index_:
             self.fitted_R_QE_symmetric_.append(self.R_QE(self.E_symmetric_, *self.resolution_fitted_parameters_[q_index]))
 
-    def fit(self, const_f_elastic = None, const_f_fast = None, const_tau_fast = None, const_beta = None, const_background = None, max_fail_count = 20):
+    def fit(self, const_f_elastic = None, const_f_fast = None, const_tau_fast = None, const_beta = None, const_background = None, max_fail_count = 20, weighted_with_error = True):
         self.fitted_parameters_ = []
         self.fitted_parameters_error_ = []
         self.chi2_ = []
@@ -456,7 +462,7 @@ class QENSDataModel:
             fail_count = 0
             while fail_count < 20:
                 try:
-                    fity, popt, perr = QENS_model.fit_transform(xdata = energy_, ydata = QENSdata_q_, yerr = error_q_, \
+                    fity, popt, perr = QENS_model.fit_transform(xdata = energy_, ydata = QENSdata_q_, yerr = error_q_ if weighted_with_error == True else None,\
                     p0 = p0, bounds = [lowerbound, upperbound], const_flag = const_flag)
                     break
                 except:
@@ -608,11 +614,11 @@ class QENSDataModel:
 
             peak_value = QENSdata_q_.max()
             if log_scale:
-                ylim = (1e-4, 12)
+                ylim = (1e-4, 10)
                 log_fg = (False, True)
                 plotfilename = "fitting_plot_%s_%d-log.png"%(self.grpfilename[:-4], q_index)
             else:
-                ylim = (0.0, 12)
+                ylim = (0.0, 1.1)
                 log_fg = (False, False)
                 plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
 
