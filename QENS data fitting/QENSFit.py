@@ -348,6 +348,7 @@ class QENSDataModel:
                     self.max_n_gauss = int(aline.strip().split()[-1])
                 elif "Mirror" in aline:
                     self.mirror = aline.strip().split()[-1]
+                    if self.mirror == "None": self.mirror = None
                 elif "Set data range" in aline:
                     self.resolution_data_range = float(aline.strip().split('|')[1])
                 elif "Group#" in aline:
