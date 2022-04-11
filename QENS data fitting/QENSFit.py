@@ -117,7 +117,7 @@ class grpFileReader:
             return energy_, q_, data_, error_
 
 class ResolutionDataModel:
-    def __init__(self, grpfilename, data_range, max_n_gauss = 4, select_q_index = None, neutron_e0 = None, seed = 42, background_type = 'c', mirror = None):
+    def __init__(self, grpfilename, data_range, max_n_gauss = 4, select_q_index = None, neutron_e0 = None, seed = 42, background_type = 'c', mirror = 'off'):
         
         self.seed = seed
         np.random.seed(self.seed)
@@ -134,7 +134,7 @@ class ResolutionDataModel:
         right = np.where(self.energy_ >   self.data_range)[0]
         left  = left[0]  if len(left)  > 0 else 0
         right = right[0] if len(right) > 0 else len(self.energy_)
-        if self.mirror == None:
+        if self.mirror == 'off':
             self.resolution_ = self.resolution_[:, left:right:1]
             self.error_ = self.error_[:, left:right:1]
             self.energy_ = self.energy_[left:right:1]
@@ -342,13 +342,13 @@ class QENSDataModel:
         
         self.resolution_fitted_parameters_ = []
         self.q_index_ = []
+        self.mirror = None
         with open(resolution_parameter_filename, "r") as fin:
             for aline in fin:
                 if "Maximum number of gaussians" in aline:
                     self.max_n_gauss = int(aline.strip().split()[-1])
                 elif "Mirror" in aline:
                     self.mirror = aline.strip().split()[-1]
-                    if self.mirror == "None": self.mirror = None
                 elif "Set data range" in aline:
                     self.resolution_data_range = float(aline.strip().split('|')[1])
                 elif "Group#" in aline:
@@ -362,7 +362,11 @@ class QENSDataModel:
                             self.resolution_fitted_parameters_[-1] = np.append(self.resolution_fitted_parameters_[-1], [float(i) for i in linelist[1:3+1]])
         if data_range: self.data_range = data_range
         if mirror: self.mirror = mirror
-         
+        if self.mirror == None: self.mirror = 'off'
+        if self.mirror != 'off' and self.mirror != 'left' and self.mirror != 'right':
+            print("mirror should be off/left/right, instead of %s."%(self.mirror))
+            exit()
+
         else: self.data_range = self.resolution_data_range
 
         self.delta_E = 0.002
@@ -379,7 +383,7 @@ class QENSDataModel:
         right = np.where(self.energy_ >   self.data_range)[0]
         left  = left[0]  if len(left)  > 0 else 0
         right = right[0] if len(right) > 0 else len(self.energy_)
-        if self.mirror == None:
+        if self.mirror == 'off':
             self.QENSdata_ = self.QENSdata_[:, left:right:1]
             self.error_ = self.error_[:, left:right:1]
             self.energy_ = self.energy_[left:right:1]
