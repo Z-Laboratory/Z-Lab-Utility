@@ -121,7 +121,10 @@ class ResolutionDataModel:
         
         self.seed = seed
         np.random.seed(self.seed)
-        self.data_range = data_range
+        if type(data_range) == tuple or type(data_range) == list:
+            self.data_range = data_range
+        else:
+            self.data_range = (-data_range, data_range)
         self.max_n_gauss = max_n_gauss
         self.neutron_e0 = neutron_e0 if neutron_e0 else 'N/A'
         self.mirror = mirror
@@ -129,9 +132,9 @@ class ResolutionDataModel:
         self.grpfilename = grpfilename
 
         self.energy_, self.q_, self.resolution_, self.error_ = grpFileReader(self.grpfilename).read()
-        left  = np.where(self.energy_ >= -self.data_range)[0]
+        left  = np.where(self.energy_ >=  self.data_range[0])[0]
         mid   = np.where(self.energy_ > 0.)[0][0]
-        right = np.where(self.energy_ >   self.data_range)[0]
+        right = np.where(self.energy_ >   self.data_range[1])[0]
         left  = left[0]  if len(left)  > 0 else 0
         right = right[0] if len(right) > 0 else len(self.energy_)
         if self.mirror == 'off':
@@ -251,7 +254,7 @@ class ResolutionDataModel:
         fout.write("Seed: %s\n"%(self.seed))
         fout.write("Maximum number of gaussians: %s\n"%(self.max_n_gauss))
         fout.write("Mirror: %s\n"%(self.mirror))
-        fout.write("Set data range: |%s| (meV)\nActual data range: %s ~ %s (meV)\n"%(self.data_range, self.energy_[0], self.energy_[-1]))
+        fout.write("Set data range: %s ~ %s (meV)\nActual data range: %s ~ %s (meV)\n"%(self.data_range[0], self.data_range[1], self.energy_[0], self.energy_[-1]))
         fout.write("\nFitting Results\n")
         fout.write("Gaussian\t%17s\t%17s\t%17s\t\t%17s\t%17s\t%17s\n"%("f", "mean", "sigma", "f_e", "mean_e", "sigma_e"))
         if self.background_type == 'c':
@@ -350,7 +353,8 @@ class QENSDataModel:
                 elif "Mirror" in aline:
                     self.mirror = aline.strip().split()[-1]
                 elif "Set data range" in aline:
-                    self.resolution_data_range = float(aline.strip().split('|')[1])
+                    linelist = aline.strip().split()
+                    self.resolution_data_range = (float(linelist[3]), float(linelist[5]))
                 elif "Group#" in aline:
                     self.q_index_.append(int(aline.strip().split()[1][:-1]))
                     self.resolution_fitted_parameters_.append([])
@@ -360,17 +364,21 @@ class QENSDataModel:
                             self.resolution_fitted_parameters_[-1] = np.array([float(i) for i in linelist[1:3+1]])
                         else:
                             self.resolution_fitted_parameters_[-1] = np.append(self.resolution_fitted_parameters_[-1], [float(i) for i in linelist[1:3+1]])
-        if data_range: self.data_range = data_range
+        if data_range:
+            if type(data_range) == tuple or type(data_range) == list:
+                self.data_range = data_range
+            else:
+                self.data_range = (-data_range, data_range)
+        else:
+            self.data_range = self.resolution_data_range
         if mirror: self.mirror = mirror
         if self.mirror == None: self.mirror = 'off'
         if self.mirror != 'off' and self.mirror != 'left' and self.mirror != 'right':
             print("mirror should be off/left/right, instead of %s."%(self.mirror))
             exit()
 
-        else: self.data_range = self.resolution_data_range
-
         self.delta_E = 0.002
-        self.E_max = self.data_range*10 # meV
+        self.E_max = max(self.data_range)*10 # meV
         self.seed = seed
         np.random.seed(self.seed)
         self.neutron_e0 = neutron_e0 if neutron_e0 else 'N/A'
@@ -378,9 +386,9 @@ class QENSDataModel:
         self.grpfilename = grpfilename
 
         self.energy_, self.q_, self.QENSdata_, self.error_ = grpFileReader(self.grpfilename).read()
-        left  = np.where(self.energy_ >= -self.data_range)[0]
+        left  = np.where(self.energy_ >=  self.data_range[0])[0]
         mid   = np.where(self.energy_ > 0.)[0][0]
-        right = np.where(self.energy_ >   self.data_range)[0]
+        right = np.where(self.energy_ >   self.data_range[1])[0]
         left  = left[0]  if len(left)  > 0 else 0
         right = right[0] if len(right) > 0 else len(self.energy_)
         if self.mirror == 'off':
@@ -589,8 +597,8 @@ class QENSDataModel:
         fout.write("Incident neutron energy: %s meV\n"%(self.neutron_e0))
         fout.write("Seed: %s\n"%(self.seed))
         fout.write("Mirror: %s\n"%(self.mirror))
-        fout.write("Set data range: |%s| (meV)\nActual data range: %s ~ %s (meV)\n"%(self.data_range, self.energy_[0], self.energy_[-1]))
-        fout.write("Resolution data range: |%s| (meV)\n"%(self.resolution_data_range))
+        fout.write("Set data range: %s ~ %s (meV)\nActual data range: %s ~ %s (meV)\n"%(self.data_range[0], self.data_range[1], self.energy_[0], self.energy_[-1]))
+        fout.write("Resolution data range: %s ~ %s (meV)\n"%(self.resolution_data_range[0], self.resolution_data_range[1]))
         fout.write("\nFitting Results\n")
 
         fout.write("Parameter\t\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s"%("A", "f_elastic", "f_fast", "tau_fast", "tau", "beta", "E_center"))
@@ -632,7 +640,7 @@ class QENSDataModel:
                 legend_.append("Constant Background")
             else:
                 legend_.append("Power Law Background")
-            legend_.append("Resolution (%s meV)"%(self.resolution_data_range))
+            legend_.append("Resolution (%s~%s meV)"%(self.resolution_data_range[0], self.resolution_data_range[1]))
             
             R_QE_symmetric_data_ = np.interp(energy_, self.E_symmetric_, self.fitted_R_QE_symmetric_[self.now_fitting_q_index])
             y_ = np.vstack((QENSdata_q_, fity, y_ENS_data_, y_QENS_component_data_, y_background_data_, R_QE_symmetric_data_))
