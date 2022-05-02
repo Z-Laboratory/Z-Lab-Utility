@@ -23,7 +23,7 @@ class DataPlot:
     def plot_save(self, plotfilename):
         plt.savefig(plotfilename)
 
-    def plot(self, x_, y_, plottype = None, legendtitle = "", yerr_ = [], legend_ = [], linestyle_ = None, markerstyle_ = None, markerface = True, markersize = 9, lw_ = None, color_ = None, log_fg = (False, False), xlabel = None, ylabel = None, xminortick = 2, yminortick = 4, xlim = None, ylim = None, legend_fontsize = 24, legendtitle_fontsize = 24, label_fontsize = 24, tick_fontsize = 24, figsize = (10, 8), axsize = .7, margin_ratio = 0.5, legend_column = 1, legend_location = 0):
+    def plot(self, x_, y_, plottype = None, plottitle = "", legendtitle = "", yerr_ = [], legend_ = [], linestyle_ = None, markerstyle_ = None, markerface = True, markersize = 9, lw_ = None, color_ = None, log_fg = (False, False), xlabel = None, ylabel = None, xminortick = 2, yminortick = 4, xlim = None, ylim = None, plottitle_fontsize = 24, legend_fontsize = 24, legendtitle_fontsize = 24, label_fontsize = 24, tick_fontsize = 24, figsize = (10, 8), axsize = .7, margin_ratio = 0.5, legend_column = 1, legend_location = 0):
         default_color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
         if color_:
             color_tmp = []
@@ -41,6 +41,7 @@ class DataPlot:
         LegendFontSize = int(legend_fontsize)
         LabelFontSize = int(label_fontsize)
         TickFontSize = int(tick_fontsize)
+        PlottitleFontSize = int(plottitle_fontsize)
         FrameWidth = 1.5
         fig = plt.figure(figsize = figsize)
         ax = fig.add_axes([margin_ratio*(1-axsize), margin_ratio*(1-axsize), axsize, axsize])
@@ -66,7 +67,7 @@ class DataPlot:
                     thisline[0].set_markerfacecolor('none')
             if color_ != None and index < len(color_):
                 thisline[0].set_color(color_[index])
-                
+        ax.set_title(plottitle, fontsize = PlottitleFontSize)        
         ax.legend(title = legendtitle, title_fontsize = legendtitle_fontsize, fontsize = LegendFontSize, ncol = legend_column, labelspacing = 0.5, frameon = False, loc = legend_location)
         if log_fg[0] == True:    ax.set_xscale('log')
         if log_fg[1] == True:    ax.set_yscale('log')
@@ -330,11 +331,12 @@ class ResolutionDataModel:
             
             pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
+            plottitle = r"$Q\ =\ %s\ \mathrm{\AA^{-1}}$"%(self.q_[q_index]), \
             lw_ = [0]+[2]*(1+component_.shape[0]), \
             markerstyle_ = ['o']+[None]*(1+component_.shape[0]), \
             linestyle_ = ['-']*2+[':']*component_.shape[0], \
             ylim = ylim, xlabel = r'$E$ (meV)', ylabel = r'$intensity$ (A.U.)', \
-            legend_fontsize = 12, \
+            legend_fontsize = 16, \
             log_fg = log_fg, \
             legend_ = ["Resolution Spectra"]+[total_legend_]+component_legend_)
             pt.plot_save(output_dir + "/" + plotfilename)
@@ -664,11 +666,12 @@ class QENSDataModel:
 
             pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
+            plottitle = r"$Q\ =\ %s\ \mathrm{\AA^{-1}}$"%(self.q_[q_index]), \
             lw_ = [0]+[2]*(len(y_)-1), \
             markerstyle_ = ['o']+[None]*(len(y_)-1), \
             linestyle_ = ['-']*2+[':']*(len(y_)-3)+['-.'], \
             ylim = ylim, xlabel = r'$E$ (meV)', ylabel = r'$intensity$ (A.U.)', \
-            legend_fontsize = 12, \
+            legend_fontsize = 16, \
             log_fg = log_fg, \
             legend_ = legend_)
             pt.plot_save(output_dir + "/" + plotfilename)
