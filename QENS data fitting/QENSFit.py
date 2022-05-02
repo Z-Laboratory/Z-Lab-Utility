@@ -67,7 +67,7 @@ class DataPlot:
                     thisline[0].set_markerfacecolor('none')
             if color_ != None and index < len(color_):
                 thisline[0].set_color(color_[index])
-        ax.set_title(plottitle, fontsize = PlottitleFontSize)        
+        ax.set_title(plottitle, fontsize = PlottitleFontSizer)        
         ax.legend(title = legendtitle, title_fontsize = legendtitle_fontsize, fontsize = LegendFontSize, ncol = legend_column, labelspacing = 0.5, frameon = False, loc = legend_location)
         if log_fg[0] == True:    ax.set_xscale('log')
         if log_fg[1] == True:    ax.set_yscale('log')
