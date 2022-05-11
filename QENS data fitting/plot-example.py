@@ -6,35 +6,28 @@ import matplotlib.pyplot as plt
 #use command "python plot-example.py <path to where fitting result file is located>"
 #for example python plot-example.py 773k/0.5mev-test/fitting_results_FLiNaK_773K_3.32meV.txt
 
-fitted_parameters_ = []
-fitted_parameters_error_ = []
+data_ = []
 parameters_name_ = []
 q_ = []
-chi2_ = []
 with open(sys.argv[1], "r") as fin:
     for aline in fin:
-        if "Group#:" in aline:
-            q_.append(float(aline.strip().split()[-2]))
-            linelist = fin.readline().strip().split()[1:]
-            fitted_parameters_.append([float(i) for i in linelist[:len(linelist)//2]])
-            fitted_parameters_error_.append([float(i) for i in linelist[len(linelist)//2:]])
-            linelist = fin.readline().strip().split()
-            chi2_.append(float(linelist[-1]))
-        elif "Fitting Results" in aline:
-            linelist = fin.readline().strip().split()[1:]
-            parameters_name_ = linelist[:len(linelist)//2]
-            
-q_ = np.array(q_)
-fitted_parameters_ = np.array(fitted_parameters_)
-fitted_parameters_error_ = np.array(fitted_parameters_error_)
+        if "Fitting Results" in aline:
+            linelist = fin.readline().strip().split('\t')
+            parameters_name_ = [i.strip() for i in linelist]
+            for newline in fin:
+                linelist = newline.strip().split()
+                data_.append([float(i) for i in linelist])
+            break
 
-target_parameter_index = parameters_name_.index("beta")
-beta_ = fitted_parameters_[:,target_parameter_index]
-beta_e = fitted_parameters_error_[:,target_parameter_index]
+
+data_ = np.array(data_)
+
+q_ = data_[:,parameters_name_.index("q (1/Angstrom)")]
+beta_  = data_[:,parameters_name_.index("beta")]
+beta_e = data_[:,parameters_name_.index("beta_e")]
 from scipy.special import gamma
-target_parameter_index = parameters_name_.index("tau")
-tau_ = fitted_parameters_[:,target_parameter_index]
-tau_e = fitted_parameters_error_[:,target_parameter_index]
+tau_  = data_[:,parameters_name_.index("tau (ps)")]
+tau_e = data_[:,parameters_name_.index("tau_e")]
 tau_avg = tau_/beta_ * gamma(1.0/beta_)
 
 tickfontsize = 12
@@ -60,4 +53,5 @@ ax[1].tick_params(axis="y",which ="minor",length=6,width=2,labelsize=tickfontsiz
 
 ax[0].legend()
 ax[1].legend()
-plt.show()
+plt.savefig(sys.argv[1]+".png")
+#plt.show()
