@@ -572,8 +572,8 @@ class QENSDataModel:
                 self.chi2_.append(np.mean(((QENSdata_q_-fity)/error_q_)**2/np.sum(1.0/error_q_**2))**0.5)
             else:
                 self.chi2_.append(np.mean((QENSdata_q_-fity)**2)**0.5)
-            
-            print("The fitting has converged, the error-weighted chi^2 = %.3e"%(self.chi2_[-1]))
+
+            print("The fitting has converged, chi^2 = %.3e"%(self.chi2_[-1]))
 
     def R_QE_component(self, E_, *args):
         component_ = []
