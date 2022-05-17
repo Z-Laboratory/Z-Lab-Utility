@@ -28,10 +28,11 @@ data_range = [(-5,2),\
               (-4,2),\
               (-5,2)], neutron_e0 = 3.32)
 #use_previous_q_as_initial_guess = an array of True or False [A,   f_elastic,  f_fast,  tau_fast,     tau , beta,  E_center,  background]
-qens.fit(const_f_elastic = [0.0,0.1,0.2,0.0,0.1,0.2,0.0,0.1,0.2,0.0,0.1],\
-         const_f_fast = 0.1, const_tau_fast = 2,\
+qens.fit(const_f_elastic = [0.0,0.1,0.2,0.0,0.1,0.2,0.0,None,None,0.0,0.1],\
+         const_f_fast = 0, const_tau_fast = 2,\
+         const_tau = [None,None,None,None,100,None,None,None,None,None,None],\
          initial_A=[0.9,0.8,0.9,0.9,0.8,0.9,0.9,0.8,0.9,0.9,0.8],\
-         use_previous_q_as_initial_guess=[False,      True,   True,     True,   True, True,    True,        True])
+         use_previous_q_as_initial_guess=[False, True, True, True, True, True, True, True])
 qens.output_results(output_dir = qens_output_dir) #default output file: fitting_results_FLiNaK_1073K_3.32meV.txt
 qens.plot_results(output_dir = qens_output_dir, show_errorbar = True)
 qens.plot_results(output_dir = qens_output_dir, log_scale = True, show_errorbar = True)

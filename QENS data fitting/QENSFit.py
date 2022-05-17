@@ -456,13 +456,26 @@ class QENSDataModel:
             #compute fitted R(Q, E)
             self.fitted_R_QE_symmetric_.append(self.R_QE(self.E_symmetric_[q_index], *self.resolution_fitted_parameters_[q_index]))
 
-    def fit(self, const_f_elastic = None, const_f_fast = None, const_tau_fast = None, const_beta = None, const_background = None, max_fail_count = 20, weighted_with_error = True,\
+    def fit(self, const_f_elastic = None, const_f_fast = None, const_tau_fast = None, const_tau = None, const_beta = None, const_background = None, max_fail_count = 20, weighted_with_error = True,\
             use_previous_q_as_initial_guess = False, \
             initial_A = 1, initial_f_elastic = 0.5, initial_f_fast = 0.05, initial_tau = 100, initial_tau_fast = 1, initial_beta = 0.5, initial_E_center = 0, initial_background = 0.001):
         self.fitted_parameters_ = []
         self.fitted_parameters_error_ = []
         self.chi2_ = []
         self.now_fitting_q_index = -1
+        if type(const_f_elastic) != tuple and type(const_f_elastic) != list:
+                const_f_elastic = [const_f_elastic]*len(self.q_index_)
+        if type(const_f_fast) != tuple and type(const_f_fast) != list:
+                const_f_fast = [const_f_fast]*len(self.q_index_)
+        if type(const_tau_fast) != tuple and type(const_tau_fast) != list:
+                const_tau_fast = [const_tau_fast]*len(self.q_index_)
+        if type(const_tau) != tuple and type(const_tau) != list:
+                const_tau = [const_tau]*len(self.q_index_)
+        if type(const_beta) != tuple and type(const_beta) != list:
+                const_beta = [const_beta]*len(self.q_index_)
+        if type(const_background) != tuple and type(const_background) != list:
+                const_background = [const_background]*len(self.q_index_)
+
         if type(use_previous_q_as_initial_guess) != tuple and type(use_previous_q_as_initial_guess) != list:
             use_previous_q_as_initial_guess = [use_previous_q_as_initial_guess]*len(self.q_index_)
         if type(initial_A) != tuple and type(initial_A) != list:
@@ -503,58 +516,47 @@ class QENSDataModel:
             const_flag          = [False]
             p0                  = [self.fitted_parameters_[-1][0]] if q_index > 0 and use_previous_q_as_initial_guess[0] == True else [initial_A[q_index]]
 
-            if const_f_elastic != None: 
+            if const_f_elastic[q_index] != None: 
                 const_flag     += [True]
-                if type(const_f_elastic) == tuple or type(const_f_elastic) == list:
-                    p0         += [const_f_elastic[q_index]]
-                else:
-                    p0         += [const_f_elastic]
+                p0             += [const_f_elastic[q_index]]
             else: 
                 const_flag     += [False]
                 p0             += [self.fitted_parameters_[-1][1]] if q_index > 0 and use_previous_q_as_initial_guess[1] == True else [initial_f_elastic[q_index]]
             
-            if const_f_fast != None:
-                const_flag     += [        True]
-                if type(const_f_fast) == tuple or type(const_f_fast) == list:
-                    p0         += [const_f_fast[q_index]]
-                else:
-                    p0         += [const_f_fast]
-                if const_f_fast == 0:
+            if const_f_fast[q_index] != None:
+                const_flag     += [True]
+                p0             += [const_f_fast[q_index]]
+                if const_f_fast[q_index] == 0:
                     const_flag += [True]
                     p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau_fast[q_index]]
-                elif const_tau_fast != None:
+                elif const_tau_fast[q_index] != None:
                     const_flag += [True]
-                    if type(const_tau_fast) == tuple or type(const_tau_fast) == list:
-                        p0     += [const_tau_fast[q_index]]
-                    else:
-                        p0     += [const_tau_fast]
+                    p0         += [const_tau_fast[q_index]]
                 else:
                     const_flag += [False]
                     p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau_fast[q_index]]
             else:
-                const_flag     += [       False]
+                const_flag     += [False]
                 p0             += [self.fitted_parameters_[-1][2]] if q_index > 0 and use_previous_q_as_initial_guess[2] == True else [initial_f_fast[q_index]]
-                if const_tau_fast != None:
+                if const_tau_fast[q_index] != None:
                     const_flag += [True]
-                    if type(const_tau_fast) == tuple or type(const_tau_fast) == list:
-                        p0     += [const_tau_fast[q_index]]
-                    else:
-                        p0     += [const_tau_fast]
+                    p0         += [const_tau_fast[q_index]]
                 else:
                     const_flag += [False]
                     p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau_fast[q_index]]
 
             #tau
-            const_flag         += [False]
-            p0                 += [self.fitted_parameters_[-1][4]] if q_index > 0 and use_previous_q_as_initial_guess[4] == True else [initial_tau[q_index]] 
+            if const_tau[q_index] != None:
+                const_flag         += [True]
+                p0                 += [const_tau[q_index]]
+            else:
+                const_flag         += [False]
+                p0                 += [self.fitted_parameters_[-1][4]] if q_index > 0 and use_previous_q_as_initial_guess[4] == True else [initial_tau[q_index]] 
             
             #beta
-            if const_beta != None:
+            if const_beta[q_index] != None:
                 const_flag     += [True]
-                if type(const_beta) == tuple or type(const_beta) == list:
-                    p0         += [const_beta[q_index]]
-                else:
-                    p0         += [const_beta]
+                p0             += [const_beta[q_index]]
             else:
                 const_flag     += [False]
                 p0             += [self.fitted_parameters_[-1][5]] if q_index > 0 and use_previous_q_as_initial_guess[5] == True else [initial_beta[q_index]] 
@@ -564,19 +566,15 @@ class QENSDataModel:
             p0                 += [self.fitted_parameters_[-1][6]] if q_index > 0 and use_previous_q_as_initial_guess[6] == True else [initial_E_center[q_index]] 
 
             #background
-            if const_background != None:
+            if const_background[q_index] != None:
                 const_flag     += [True]
-                if type(const_background) == tuple or type(const_background) == list:
-                    p0         += [const_background[q_index]]
-                else:
-                    p0         += [const_background]
+                p0             += [const_background[q_index]]
             else:
-                const_flag         += [False]
-                p0                 += [self.fitted_parameters_[-1][7]] if q_index > 0 and use_previous_q_as_initial_guess[7] == True else [initial_background[q_index]] 
+                const_flag     += [False]
+                p0             += [self.fitted_parameters_[-1][7]] if q_index > 0 and use_previous_q_as_initial_guess[7] == True else [initial_background[q_index]] 
             
-            print(p0)
             fail_count = 0
-            while fail_count < 20:
+            while fail_count < max_fail_count:
                 try:
                     fity, popt, perr = QENS_model.fit_transform(xdata = energy_q_, ydata = QENSdata_q_, yerr = error_q_ if weighted_with_error == True else None,\
                     p0 = p0, bounds = [lowerbound, upperbound], const_flag = const_flag)
