@@ -325,6 +325,7 @@ class ResolutionDataModel:
             else:
                 component_legend_ += ["Power Law Background"]
             total_legend_ = "Fitted Curve"
+            legend_ = ["Resolution Spectra"]+[total_legend_]+component_legend_
 
             y_ = np.vstack((resolution_q_, fity, component_))
             x_ = np.tile(energy_q_, (y_.shape[0], 1))
@@ -334,15 +335,15 @@ class ResolutionDataModel:
                 yerr_ = []
 
             peak_value = resolution_q_.max()
+            log_sufix = ""
             if log_scale:
                 ylim = (1e-4, 10)
-                log_fg = (False, True)
-                plotfilename = "fitting_plot_%s_%d-log.png"%(self.grpfilename[:-4], q_index)
-            else:
-                ylim = (0.0, 1.1)
-                log_fg = (False, False)
-                plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
-            
+                log_sufix = "-log"
+            else: ylim = (0.0, 1.1)
+            log_fg = (False, log_scale)
+            plotfilename = "fitting_plot_%s_%d%s.png"%(self.grpfilename[:-4], q_index, log_sufix)
+            datafilename = "fitting_data_%s_%d.txt"%(self.grpfilename[:-4], q_index)
+
             pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
             plottitle = r"$Q\ =\ %s\ \mathrm{\AA^{-1}}$"%(self.q_[q_index]), \
@@ -352,9 +353,23 @@ class ResolutionDataModel:
             ylim = ylim, xlabel = r'$E$ (meV)', ylabel = r'$intensity$ (A.U.)', \
             legend_fontsize = 16, \
             log_fg = log_fg, \
-            legend_ = ["Resolution Spectra"]+[total_legend_]+component_legend_)
+            legend_ = legend_)
             pt.plot_save(output_dir + "/" + plotfilename)
             pt.plot_clear()
+
+            with open(output_dir + "/" + datafilename, "w") as fout:
+                fout.write("%10s\t "%("E (MeV)"))
+                for j in range(x_.shape[0]):
+                    fout.write("%20s\t "%(legend_[j]))
+                    if j == 0: fout.write("%20s\t "%("error"))
+                fout.write("\n")
+                for i in range(x_.shape[1]):
+                    fout.write("%10s\t "%(x_[j][i]))
+                    for j in range(x_.shape[0]):
+                        fout.write("%20.10e\t "%(y_[j][i]))
+                        if j == 0: fout.write("%20.10e\t "%(yerr_[0][i]))
+                    fout.write("\n")
+
 
 class QENSDataModel:
     def __init__(self, grpfilename, resolution_parameter_filename, data_range = None, neutron_e0 = None, seed = 42, background_type = 'c', mirror = None):
@@ -725,21 +740,20 @@ class QENSDataModel:
             y_ = np.vstack((QENSdata_q_, fity, y_ENS_data_, y_QENS_component_data_, y_background_data_, R_QE_symmetric_data_))
             x_ = np.tile(energy_q_, (y_.shape[0], 1))
 
-            
             if show_errorbar:
                 yerr_ = [error_q_] + [[] for i in range(y_.shape[0]-1)]
             else:
                 yerr_ = []
 
             peak_value = QENSdata_q_.max()
+            log_sufix = ""
             if log_scale:
                 ylim = (1e-4, 10)
-                log_fg = (False, True)
-                plotfilename = "fitting_plot_%s_%d-log.png"%(self.grpfilename[:-4], q_index)
-            else:
-                ylim = (0.0, 1.1)
-                log_fg = (False, False)
-                plotfilename = "fitting_plot_%s_%d.png"%(self.grpfilename[:-4], q_index)
+                log_sufix = "-log"
+            else: ylim = (0.0, 1.1)
+            log_fg = (False, log_scale)
+            plotfilename = "fitting_plot_%s_%d%s.png"%(self.grpfilename[:-4], q_index, log_sufix)
+            datafilename = "fitting_data_%s_%d.txt"%(self.grpfilename[:-4], q_index)
 
             pt = DataPlot()
             pt.plot(x_, y_, yerr_ = yerr_, \
@@ -753,3 +767,16 @@ class QENSDataModel:
             legend_ = legend_)
             pt.plot_save(output_dir + "/" + plotfilename)
             pt.plot_clear()
+
+            with open(output_dir + "/" + datafilename, "w") as fout:
+                fout.write("%10s\t "%("E (MeV)"))
+                for j in range(x_.shape[0]):
+                    fout.write("%30s\t "%(legend_[j]))
+                    if j == 0: fout.write("%30s\t "%("error"))
+                fout.write("\n")
+                for i in range(x_.shape[1]):
+                    fout.write("%10s\t "%(x_[j][i]))
+                    for j in range(x_.shape[0]):
+                        fout.write("%30.10e\t "%(y_[j][i]))
+                        if j == 0: fout.write("%30.10e\t "%(yerr_[0][i]))
+                    fout.write("\n")
