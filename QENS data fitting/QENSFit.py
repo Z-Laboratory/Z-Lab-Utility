@@ -21,7 +21,7 @@ class DataPlot:
         plt.close('all')
 
     def plot_save(self, plotfilename):
-        plt.savefig(plotfilename)
+        plt.savefig(plotfilename, transparent = False)
 
     def plot(self, x_, y_, plottype = None, plottitle = "", legendtitle = "", yerr_ = [], legend_ = [], linestyle_ = None, markerstyle_ = None, markerface = True, markersize = 5, lw_ = None, color_ = None, log_fg = (False, False), xlabel = None, ylabel = None, xminortick = 2, yminortick = 4, xlim = None, ylim = None, plottitle_fontsize = 24, legend_fontsize = 24, legendtitle_fontsize = 24, label_fontsize = 24, tick_fontsize = 24, figsize = (10, 8), axsize = .7, margin_ratio = 0.5, legend_column = 1, legend_location = 0):
         default_color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -56,23 +56,23 @@ class DataPlot:
                 thisline = ax.plot(x_[index], y_[index], label = legend)
             else:
                 thisline = ax.errorbar(x_[index], y_[index], yerr_[index], lw = 2, fmt = '-o', elinewidth = 2, capsize = 3, markersize = 5, label = legend, fillstyle = 'none', zorder = 1)  
-            if lw_ != None and index < len(lw_):
+            if lw_ is not None and index < len(lw_):
                 thisline[0].set_linewidth(lw_[index])
-            if linestyle_ != None and index < len(linestyle_):
+            if linestyle_ is not None and index < len(linestyle_):
                 thisline[0].set_linestyle(linestyle_[index])
-            if markerstyle_ != None and index < len(markerstyle_):
+            if markerstyle_ is not None and index < len(markerstyle_):
                 thisline[0].set_marker(markerstyle_[index])
                 thisline[0].set_markersize(markersize)
                 if markerface == False:
                     thisline[0].set_markerfacecolor('none')
-            if color_ != None and index < len(color_):
+            if color_ is not None and index < len(color_):
                 thisline[0].set_color(color_[index])
         ax.set_title(plottitle, fontsize = PlottitleFontSize)        
         ax.legend(title = legendtitle, title_fontsize = legendtitle_fontsize, fontsize = LegendFontSize, ncol = legend_column, labelspacing = 0.5, frameon = False, loc = legend_location)
         if log_fg[0] == True:    ax.set_xscale('log')
         if log_fg[1] == True:    ax.set_yscale('log')
-        if xlim != None: ax.set_xlim(xlim)
-        if ylim != None: ax.set_ylim(ylim)
+        if xlim is not None: ax.set_xlim(xlim)
+        if ylim is not None: ax.set_ylim(ylim)
         ax.tick_params(axis = "x", which = "major", length = 9, width = 2, labelsize = TickFontSize, pad = 10)
         ax.tick_params(axis = "y", which = "major", length = 9, width = 2, labelsize = TickFontSize, pad = 10)
         ax.tick_params(axis = "x", which = "minor", length = 6, width = 2, labelsize = TickFontSize, pad = 10)
@@ -400,7 +400,7 @@ class QENSDataModel:
                             self.resolution_fitted_parameters_[-1] = np.append(self.resolution_fitted_parameters_[-1], [float(i) for i in linelist[1:3+1]])
 
         if mirror: self.mirror = mirror
-        if self.mirror == None: self.mirror = 'off'
+        if self.mirror is None: self.mirror = 'off'
         if self.mirror != 'off' and self.mirror != 'left' and self.mirror != 'right':
             print("mirror should be off/left/right, instead of %s."%(self.mirror))
             exit()
@@ -471,19 +471,23 @@ class QENSDataModel:
             #compute fitted R(Q, E)
             self.fitted_R_QE_symmetric_.append(self.R_QE(self.E_symmetric_[q_index], *self.resolution_fitted_parameters_[q_index]))
 
-    def fit(self, const_f_elastic = None, const_f_fast = None, const_tau_fast = None, const_tau = None, const_beta = None, const_background = None, max_fail_count = 20, weighted_with_error = True,\
-            use_previous_q_as_initial_guess = False, \
-            initial_A = 1, initial_f_elastic = 0.5, initial_f_fast = 0.05, initial_tau = 100, initial_tau_fast = 1, initial_beta = 0.5, initial_E_center = 0, initial_background = 0.001):
+    def fit(self, const_f_elastic = None, const_f1 = None, const_tau1 = None, const_f2 = 0, const_tau2 = None, const_tau = None, const_beta = None, const_background = None,\
+                  initial_A = 1, initial_f_elastic = 0.5, initial_f1 = 0.05, initial_tau1 = 1, initial_f2 = 0.1, initial_tau2 = 10, initial_tau = 100, initial_beta = 0.5, initial_E_center = 0, initial_background = 0.001, \
+                  max_fail_count = 20, weighted_with_error = True, use_previous_q_as_initial_guess = False):
         self.fitted_parameters_ = []
         self.fitted_parameters_error_ = []
         self.chi2_ = []
         self.now_fitting_q_index = -1
         if type(const_f_elastic) != tuple and type(const_f_elastic) != list:
                 const_f_elastic = [const_f_elastic]*len(self.q_index_)
-        if type(const_f_fast) != tuple and type(const_f_fast) != list:
-                const_f_fast = [const_f_fast]*len(self.q_index_)
-        if type(const_tau_fast) != tuple and type(const_tau_fast) != list:
-                const_tau_fast = [const_tau_fast]*len(self.q_index_)
+        if type(const_f1) != tuple and type(const_f1) != list:
+                const_f1 = [const_f1]*len(self.q_index_)
+        if type(const_tau1) != tuple and type(const_tau1) != list:
+                const_tau1 = [const_tau1]*len(self.q_index_)
+        if type(const_f2) != tuple and type(const_f2) != list:
+                const_f2 = [const_f2]*len(self.q_index_)
+        if type(const_tau2) != tuple and type(const_tau2) != list:
+                const_tau2 = [const_tau2]*len(self.q_index_)
         if type(const_tau) != tuple and type(const_tau) != list:
                 const_tau = [const_tau]*len(self.q_index_)
         if type(const_beta) != tuple and type(const_beta) != list:
@@ -497,12 +501,16 @@ class QENSDataModel:
             initial_A = [initial_A]*len(self.q_index_)
         if type(initial_f_elastic) != tuple and type(initial_f_elastic) != list:
             initial_f_elastic = [initial_f_elastic]*len(self.q_index_)
-        if type(initial_f_fast) != tuple and type(initial_f_fast) != list:
-            initial_f_fast = [initial_f_fast]*len(self.q_index_)
+        if type(initial_f1) != tuple and type(initial_f1) != list:
+            initial_f1 = [initial_f1]*len(self.q_index_)
+        if type(initial_tau1) != tuple and type(initial_tau1) != list:
+            initial_tau1 = [initial_tau1]*len(self.q_index_)
+        if type(initial_f2) != tuple and type(initial_f2) != list:
+            initial_f2 = [initial_f2]*len(self.q_index_)
+        if type(initial_tau2) != tuple and type(initial_tau2) != list:
+            initial_tau2 = [initial_tau2]*len(self.q_index_)
         if type(initial_tau) != tuple and type(initial_tau) != list:
             initial_tau = [initial_tau]*len(self.q_index_)
-        if type(initial_tau_fast) != tuple and type(initial_tau_fast) != list:
-            initial_tau_fast = [initial_tau_fast]*len(self.q_index_)
         if type(initial_beta) != tuple and type(initial_beta) != list:
             initial_beta = [initial_beta]*len(self.q_index_)
         if type(initial_E_center) != tuple and type(initial_E_center) != list:
@@ -523,72 +531,100 @@ class QENSDataModel:
 
             peak_value = QENSdata_q_.max()
             QENS_model = CF.Model(function = self.QENSdata_function)
-            #                           A  f_elastic  f_fast  tau_fast     tau  beta          E_center  background
-            lowerbound          = [     0,         0,      0,        0,      0,    0, energy_q_.min(),           0]
-            upperbound          = [np.inf,         1,       1,  np.inf, np.inf,    1, energy_q_.max(),      np.inf]
+            #                           A  f_elastic  f1    tau1  f2    tau2     tau  beta         E_center   background
+            lowerbound          = [     0,         0,  0,      0,  0,      0,      0,    0, energy_q_.min(),           0]
+            upperbound          = [np.inf,         1,  1, np.inf,  1, np.inf, np.inf,    1, energy_q_.max(),      np.inf]
             
             #A
             const_flag          = [False]
             p0                  = [self.fitted_parameters_[-1][0]] if q_index > 0 and use_previous_q_as_initial_guess[0] == True else [initial_A[q_index]]
 
-            if const_f_elastic[q_index] != None: 
+            if const_f_elastic[q_index] is not None: 
                 const_flag     += [True]
                 p0             += [const_f_elastic[q_index]]
             else: 
                 const_flag     += [False]
                 p0             += [self.fitted_parameters_[-1][1]] if q_index > 0 and use_previous_q_as_initial_guess[1] == True else [initial_f_elastic[q_index]]
             
-            if const_f_fast[q_index] != None:
+            #f1 and tau1
+            if const_f1[q_index] is not None:
                 const_flag     += [True]
-                p0             += [const_f_fast[q_index]]
-                if const_f_fast[q_index] == 0:
+                p0             += [const_f1[q_index]]
+                if const_f1[q_index] == 0:
                     const_flag += [True]
-                    p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau_fast[q_index]]
-                elif const_tau_fast[q_index] != None:
+                    p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau1[q_index]]
+                elif const_tau1[q_index] is not None:
                     const_flag += [True]
-                    p0         += [const_tau_fast[q_index]]
+                    p0         += [const_tau1[q_index]]
                 else:
                     const_flag += [False]
-                    p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau_fast[q_index]]
+                    p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau1[q_index]]
             else:
                 const_flag     += [False]
-                p0             += [self.fitted_parameters_[-1][2]] if q_index > 0 and use_previous_q_as_initial_guess[2] == True else [initial_f_fast[q_index]]
-                if const_tau_fast[q_index] != None:
+                p0             += [self.fitted_parameters_[-1][2]] if q_index > 0 and use_previous_q_as_initial_guess[2] == True else [initial_f1[q_index]]
+                if const_tau1[q_index] is not None:
                     const_flag += [True]
-                    p0         += [const_tau_fast[q_index]]
+                    p0         += [const_tau1[q_index]]
                 else:
                     const_flag += [False]
-                    p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau_fast[q_index]]
+                    p0         += [self.fitted_parameters_[-1][3]] if q_index > 0 and use_previous_q_as_initial_guess[3] == True else [initial_tau1[q_index]]
+
+            #f2 and tau2
+            if const_f2[q_index] is not None:
+                const_flag     += [True]
+                p0             += [const_f2[q_index]]
+                if const_f2[q_index] == 0:
+                    const_flag += [True]
+                    p0         += [self.fitted_parameters_[-1][5]] if q_index > 0 and use_previous_q_as_initial_guess[5] == True else [initial_tau2[q_index]]
+                elif const_tau2[q_index] is not None:
+                    const_flag += [True]
+                    p0         += [const_tau2[q_index]]
+                else:
+                    const_flag += [False]
+                    p0         += [self.fitted_parameters_[-1][5]] if q_index > 0 and use_previous_q_as_initial_guess[5] == True else [initial_tau2[q_index]]
+            else:
+                const_flag     += [False]
+                p0             += [self.fitted_parameters_[-1][4]] if q_index > 0 and use_previous_q_as_initial_guess[4] == True else [initial_f2[q_index]]
+                if const_tau2[q_index] is not None:
+                    const_flag += [True]
+                    p0         += [const_tau2[q_index]]
+                else:
+                    const_flag += [False]
+                    p0         += [self.fitted_parameters_[-1][5]] if q_index > 0 and use_previous_q_as_initial_guess[5] == True else [initial_tau2[q_index]]
 
             #tau
-            if const_tau[q_index] != None:
+            if const_tau[q_index] is not None:
                 const_flag         += [True]
                 p0                 += [const_tau[q_index]]
             else:
                 const_flag         += [False]
-                p0                 += [self.fitted_parameters_[-1][4]] if q_index > 0 and use_previous_q_as_initial_guess[4] == True else [initial_tau[q_index]] 
+                p0                 += [self.fitted_parameters_[-1][6]] if q_index > 0 and use_previous_q_as_initial_guess[6] == True else [initial_tau[q_index]] 
             
             #beta
-            if const_beta[q_index] != None:
+            if const_beta[q_index] is not None:
                 const_flag     += [True]
                 p0             += [const_beta[q_index]]
             else:
                 const_flag     += [False]
-                p0             += [self.fitted_parameters_[-1][5]] if q_index > 0 and use_previous_q_as_initial_guess[5] == True else [initial_beta[q_index]] 
+                p0             += [self.fitted_parameters_[-1][7]] if q_index > 0 and use_previous_q_as_initial_guess[7] == True else [initial_beta[q_index]] 
                 
             #E_center
             const_flag         += [False]
-            p0                 += [self.fitted_parameters_[-1][6]] if q_index > 0 and use_previous_q_as_initial_guess[6] == True else [initial_E_center[q_index]] 
+            p0                 += [self.fitted_parameters_[-1][8]] if q_index > 0 and use_previous_q_as_initial_guess[8] == True else [initial_E_center[q_index]] 
 
             #background
-            if const_background[q_index] != None:
+            if const_background[q_index] is not None:
                 const_flag     += [True]
                 p0             += [const_background[q_index]]
             else:
                 const_flag     += [False]
-                p0             += [self.fitted_parameters_[-1][7]] if q_index > 0 and use_previous_q_as_initial_guess[7] == True else [initial_background[q_index]] 
+                p0             += [self.fitted_parameters_[-1][9]] if q_index > 0 and use_previous_q_as_initial_guess[9] == True else [initial_background[q_index]] 
             
             fail_count = 0
+
+            # print(p0)
+            # fity, popt, perr = QENS_model.fit_transform(xdata = energy_q_, ydata = QENSdata_q_, yerr = error_q_ if weighted_with_error == True else None,\
+            # p0 = p0, bounds = [lowerbound, upperbound], const_flag = const_flag)
             while fail_count < max_fail_count:
                 try:
                     fity, popt, perr = QENS_model.fit_transform(xdata = energy_q_, ydata = QENSdata_q_, yerr = error_q_ if weighted_with_error == True else None,\
@@ -620,19 +656,21 @@ class QENSDataModel:
     def R_QE(self, E_, *args):
         return np.sum(self.R_QE_component(E_, *args), axis = 0)
     
-    def F_Qt_component(self, t_, f_fast, tau_fast, tau, beta):
-        return np.vstack((f_fast * np.exp(-t_/tau_fast), (1.0 - f_fast) * kww(t_, tau, beta)))
+    def F_Qt_component(self, t_, f1, tau1, f2, tau2, tau, beta):
+        return np.vstack((f1 * np.exp(-t_/tau1), f2 * np.exp(-t_/tau2), (1.0 - f1 - f2) * kww(t_, tau, beta)))
     
     def QENS_function(self, E_data_, *args):
         #name the parameters
-        A = args[0]
-        f_elastic = args[1]
-        f_fast = args[2]
-        tau_fast = args[3] * 1.519
-        tau = args[4] * 1.519
-        beta = args[5]
-        E_center = args[6]
-        background = args[7]
+        A          = args[0]
+        f_elastic  = args[1]
+        f1         = args[2]
+        tau1       = args[3] * 1.519
+        f2         = args[4]
+        tau2       = args[5] * 1.519
+        tau        = args[6] * 1.519
+        beta       = args[7]
+        E_center   = args[8]
+        background = args[9]
 
         #load pre-calculated time and energy axes
         t_ = self.t_[self.now_fitting_q_index]
@@ -644,7 +682,7 @@ class QENSDataModel:
         
         #compute F(Q, t) (fast component, KWW function)
         #F_Qt_ = self.F_Qt(t_, tau, beta)
-        F_Qt_component_ = self.F_Qt_component(t_, f_fast, tau_fast, tau, beta)
+        F_Qt_component_ = self.F_Qt_component(t_, f1, tau1, f2, tau2, tau, beta)
         F_Qt_component_symmetric_ = np.concatenate((np.flip(F_Qt_component_[:, 1:], axis = 1), F_Qt_component_), axis = 1)
         
         #compute R(Q, t)
@@ -655,7 +693,8 @@ class QENSDataModel:
 
         _, tmp0 = ezfft.ezifft(t_symmetric_, F_Qt_component_times_R_Qt_symmetric_[0])
         _, tmp1 = ezfft.ezifft(t_symmetric_, F_Qt_component_times_R_Qt_symmetric_[1])
-        S_QE_component_conv_R_QE_symmetric_ = np.vstack((tmp0,tmp1))
+        _, tmp2 = ezfft.ezifft(t_symmetric_, F_Qt_component_times_R_Qt_symmetric_[2])
+        S_QE_component_conv_R_QE_symmetric_ = np.vstack((tmp0,tmp1,tmp2))
 
         #take only the real part
         R_QE_symmetric_ = np.real(R_QE_symmetric_)
@@ -699,10 +738,10 @@ class QENSDataModel:
         fout.write("\nFitting Results\n")
 
         fout.write("%6s\t%17s\t%17s"%("Group#","q (1/Angstrom)","chi^2"))
-        fout.write("\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s"%("A", "f_elastic", "f_fast", "tau_fast (ps)", "tau (ps)", "beta", "E_center (meV)"))
+        fout.write("\t%17s\t%17s\t%17s\t%17s%17s\t%17s\t%17s\t%17s\t%17s"%("A", "f_elastic", "f1", "tau1 (ps)", "f2", "tau2 (ps)", "tau (ps)", "beta", "E_center (meV)"))
         if self.background_type == 'c': fout.write("\t%17s"%("c"))
         elif self.background_type == 'p': fout.write("\t%17s\t%17s"%("b", "e0"))
-        fout.write("\t\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s"%("A_e", "f_elastic_e", "f_fast_e", "tau_fast_e", "tau_e", "beta_e", "E_center_e"))
+        fout.write("\t\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s\t%17s"%("A_e", "f_elastic_e", "f1_e", "tau1_e", "f2_e", "tau2_e", "tau_e", "beta_e", "E_center_e"))
         if self.background_type == 'c': fout.write("\t%17s"%("c_e"))
         elif self.background_type == 'p': fout.write("\t%17s\t%17s"%("b_e", "e0_e"))
         fout.write("\n")
@@ -729,7 +768,7 @@ class QENSDataModel:
 
             fity, y_ENS_data_, y_QENS_component_data_, y_background_data_ = self.QENS_function(energy_q_, *self.fitted_parameters_[q_index])
             
-            legend_ = ["QENS Spectra", "Fitted Curve", "ENS component", "QENS(fast) component", "QENS(KWW) component"]
+            legend_ = ["QENS Spectra", "Fitted Curve", "ENS component", "QENS(exp1) component", "QENS(exp2) component", "QENS(KWW) component"]
             if self.background_type == 'c':
                 legend_.append("Constant Background")
             else:
