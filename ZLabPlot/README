@@ -1,0 +1,4 @@
+#ZLabPlot
+
+To use matplotlibrc as default matplotlib setup, add the following line to ~/.bashrc or ~/.zshrc:
+    export MATPLOTLIBRC=/path/to/matplotlibrc

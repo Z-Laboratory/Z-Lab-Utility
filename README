@@ -12,6 +12,11 @@ QENSFit: A script that fits Quasielastic neutron scattering (QENS) data.
 
 ZLabPlot: A script that produce plots for publication.
 
+To add these scripts/routines into python paths, select lines below and add to ~/.bashrc or ~/.zshrc:
+    export PYTHONPATH=$PYTHONPATH:/path/to/Z-Lab-Utility
+    export PYTHONPATH=$PYTHONPATH:/path/to/Z-Lab-Utility/ZLabPlot
+    export PYTHONPATH=$PYTHONPATH:/path/to/Z-Lab-Utility/QENSFit
+    
 This repository is developed and maintained by Z Lab. Developers to this repository were made by:
 
 Shao-Chun Lee (scl6@illinois.edu)<br/>
