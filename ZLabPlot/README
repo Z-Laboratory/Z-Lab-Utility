@@ -1,4 +1,14 @@
 # ZLabPlot
 
+Prerequisite
+    Numpy
+    Matplotlib3
+    LaTex
+        Download:                  https://www.latex-project.org/get/#a-note-on-git-pull-requests
+        Installation instructions: https://www.tug.org/texlive/
+        make sure latex executable is in your PATH
+        if you do not want to install LaTex, set text.usetex to False; e.g.:
+            zp = ZLabPlot(rcmap = {'text.usetex': False})
+
 To use matplotlibrc as default matplotlib setup, add the following line to ~/.bashrc or ~/.zshrc:
     export MATPLOTLIBRC=/path/to/matplotlibrc
