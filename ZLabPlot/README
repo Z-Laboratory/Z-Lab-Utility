@@ -1,9 +1,8 @@
 # ZLabPlot
 
-Prerequisite
-    mumpy
-    matplotlib3
-    LaTex
+Dependencies of this package:
+    General:            numpy, matplotlib3, and LaTex.
+    LaTex:
         Download:                  https://www.latex-project.org/get/#a-note-on-git-pull-requests
         Installation instructions: https://www.tug.org/texlive/
         make sure latex executable is in your PATH
