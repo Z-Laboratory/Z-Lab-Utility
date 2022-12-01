@@ -1,8 +1,8 @@
 # ZLabPlot
 
 Prerequisite
-    Numpy
-    Matplotlib3
+    mumpy
+    matplotlib3
     LaTex
         Download:                  https://www.latex-project.org/get/#a-note-on-git-pull-requests
         Installation instructions: https://www.tug.org/texlive/
@@ -12,3 +12,10 @@ Prerequisite
 
 To use matplotlibrc as default matplotlib setup, add the following line to ~/.bashrc or ~/.zshrc:
     export MATPLOTLIBRC=/path/to/matplotlibrc
+
+This project is developed and maintained by Z Lab. Developers to this project were made by:
+
+Shao-Chun Lee (scl6@illinois.edu)<br/>
+Y Z (zhyang@illinois.edu)
+
+For obtaining user support please contact us at Z Lab (https://z.engineering.illinois.edu/).
