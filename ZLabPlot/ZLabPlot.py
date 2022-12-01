@@ -1,3 +1,11 @@
+#
+#  ZLabPlot.py
+#  
+#  Copyright (c) 2022 Z-Group. All rights reserved.
+#  -----------------------------------------------------
+#  Current developers  : Shao-Chun Lee    (2022 - Present)
+#  -----------------------------------------------------
+
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt

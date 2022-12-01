@@ -1,3 +1,11 @@
+#
+#  ezfft.py
+#  
+#  Copyright (c) 2022 Z-Group. All rights reserved.
+#  -----------------------------------------------------
+#  Current developers  : Shao-Chun Lee    (2022 - Present)
+#  -----------------------------------------------------
+
 import numpy as np
 
 def ezfft(t_, f_t_):

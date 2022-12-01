@@ -1,3 +1,11 @@
+#
+#  LiquidLibIO.py
+#  
+#  Copyright (c) 2022 Z-Group. All rights reserved.
+#  -----------------------------------------------------
+#  Current developers  : Shao-Chun Lee    (2022 - Present)
+#  -----------------------------------------------------
+
 import numpy as np
 
 def smooth(x, y, n_points = 1000, sg_filter = True, sg_window = 101):
