@@ -55,8 +55,7 @@ def compute_sk_abs_prefactor(atom_name, atom_num, volume, weighting_type = "neut
     #unit of scattering lengths: fm
     #unit of volume:             angstrom^3
     #unit of prefactor:          cm^-1
-    from ScatteringLengthTable import scattering_length_table
-    from AtomicFormFactorTable import atomic_form_factor_table
+    from AtomicFormFactorTable import scattering_length_table, atomic_form_factor_table
     unit_prefactor = 1e-2 # cm^-1 = 1.0 (fm^2) * 1e-30 (m^2/fm^2) * 1e+30 (A^3/m^3) * 1e-2 m/cm
     N = sum(atom_num)
     if weighting_type == 'neutron':
