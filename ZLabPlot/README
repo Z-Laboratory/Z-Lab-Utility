@@ -15,7 +15,7 @@ To use matplotlibrc as default matplotlib setup, add the following line to ~/.ba
 
 This project is developed and maintained by Z Lab. Developers to this project were made by:
 
-Shao-Chun Lee (scl6@illinois.edu)<br/>
+Shao-Chun Lee (scl6@illinois.edu)
 Y Z (zhyang@illinois.edu)
 
 For obtaining user support please contact us at Z Lab (https://z.engineering.illinois.edu/).
