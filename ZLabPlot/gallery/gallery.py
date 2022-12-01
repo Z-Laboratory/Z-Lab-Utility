@@ -34,8 +34,6 @@ zp.add_data(t_, r2t_, plottype = plottype, lw = 2, xlog = True, ylog = True, leg
 zp.save(filename = 'r2t', transparent = False)
 zp.clear()
 
-exit()
-
 test_x = np.linspace(0., 100., num = 30)
 tau = [50*i for i in range(1,11)]
 test_y1 = [np.exp(-test_x/i) for i in tau]
@@ -58,5 +56,7 @@ zp.add_subplot(subplot_name = "3", subplot_spec = 224)
 zp.add_data(test_x, test_y2, subplot_name = "3", ylabel = "test2", ms = ['s']*2, msize= 3, mf = 'left', cmap = 'plasma', lw = 0.5)
 zp.save(filename = 'test2', transparent = False)
 zp.clear()
+
+exit()
 
 
