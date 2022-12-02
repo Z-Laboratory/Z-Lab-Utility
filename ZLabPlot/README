@@ -12,6 +12,9 @@ Dependencies of this package:
 To use matplotlibrc as default matplotlib setup, add the following line to ~/.bashrc or ~/.zshrc:
     export MATPLOTLIBRC=/path/to/matplotlibrc
 
+# Working with LiquidLibIO
+The variable "plottype" is provided whenever LiquidLibIO.read() is called, which can then be used as an argument in ZLabPlot().add_data(). ZLabPlot will plot the figures according to "plottype" (current version supports only axis labels).
+
 This project is developed and maintained by Z Lab. Developers to this project were made by:
 
 Shao-Chun Lee (scl6@illinois.edu)
