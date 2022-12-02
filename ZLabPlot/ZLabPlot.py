@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-if 'win' in sys.platform.lower(): plt.rcParms['backend'] = 'TkAgg'
+if 'win' in sys.platform.lower() and 'darwin' not in sys.platform.lower(): plt.rcParms['backend'] = 'TkAgg'
 zlab_default_rcParams = plt.rcParams.copy()
 
 class ZLabPlot:
