@@ -5,6 +5,22 @@
 #  -----------------------------------------------------
 #  Current developers  : Shao-Chun Lee    (2022 - Present)
 #  -----------------------------------------------------
+#  
+# CurveFitting is a modulus for general curve fitting based on scipy.optimize.curve_fit.
+# The "const_flag" variable allows users to fix the paramters via redefining the fitted function,
+# which will change the size of the covariance matrix when evaluating the uncertainties of the parameters.
+# see https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html 
+# for more information about scipy.optimize.curve_fit
+
+# Example code to use CurveFitting:
+# import CurveFitting as CF
+# def myfunction(x, a, b, c,...):
+#     ...
+#     return y
+# mymodel = CF.Model(function = myfunction)
+# fity, popt, perr = mymodel.fit_transform(xdata = xdata, ydata = ydata, yerr = yerr, \
+#                                          p0 = p0, bounds = [lowerbound, upperbound], \
+#                                          const_flag = const_flag)
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -30,6 +46,19 @@ class Model:
         self.fit_function = fit_function
 
     def fit(self, xdata, ydata, yerr = None, p0 = None, bounds = (-np.inf, np.inf), const_flag = None, absolute_sigma = False):
+        # argument
+        #   xdata:      np.array
+        #   ydata:      np.array
+        #   yerr:       np.array or None
+        #   p0:         list[float], initial values of fitting parameters
+        #   lowerbound: list[float] or (float, float), 
+        #   upperbound: list[float] or (float, float),
+        #               upperbound/lowerbound of fitting parameters, if upperbound/lowerbound = (float, float), the boundaries are broadcasted to all parmeters.
+        #   const_flag: list[bool],  set fitting parameters to constant according to p0
+        #   absolute_sigma: bool
+        # return
+        #   popt:       np.array, optimized parameters
+        #   perr:       np.array, uncertainty of the optimized parameters
         new_p0 = []
         new_bounds = [[], []]
         self.const_flag = const_flag
@@ -73,9 +102,11 @@ class Model:
         return self.popt, self.perr
     
     def transform(self, xdata):
+        # evaluate functional values at xdata with optimized parameters
         return self.function(xdata, *self.popt)
     
     def fit_transform(self, xdata, ydata, yerr = None, p0 = None, bounds = (-np.inf, np.inf), const_flag = None, absolute_sigma = False):
+        # equivalent to fit + transform
         self.fit(xdata, ydata, yerr = yerr, p0 = p0, bounds = bounds, const_flag = const_flag, absolute_sigma = absolute_sigma)
         return self.transform(xdata), self.popt, self.perr
 
