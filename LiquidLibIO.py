@@ -40,9 +40,10 @@ def sg_smooth(x, y, sg_window=11):
 
 def compute_sk_abs_prefactor(atom_name, atom_num, volume, weighting_type = "neutron", k_values=[]):
     #argument
-    #   atom_name:      list[str], nemas of the atoms 
-    #                   see ScatteringLengthTable.scattering_length_table and AtomicFormFactorTable.atomic_form_factor_table 
-    #                   for available names.
+    #   atom_name:      list[str], names of the atoms 
+    #                   available names are listed in AtomicFormFactorTable:
+    #                       scattering_length_table  if weighting_type = "neutron"
+    #                       atomic_form_factor_table if weighting_type = "xray"
     #   atom_num:       list[int], number of the atoms
     #   volume:         float, volume of the simulation box
     #   weighting_type: 'neutron' or 'xray'
