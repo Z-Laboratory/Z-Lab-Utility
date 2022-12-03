@@ -227,10 +227,10 @@ class ZLabPlot:
         if ylim is not None: ax.set_ylim(ylim)
         else:                ylim = ax.get_ylim()
         if xstart is not None and xinc is not None:
-            xticks = self.custom_ticks(self, xstart, xinc, xlog, xlim)
+            xticks = self.custom_ticks(xstart, xinc, xlog, xlim)
             ax.set_xticks(xticks)
         if ystart is not None and yinc is not None:
-            yticks = self.custom_ticks(self, ystart, yinc, ylog, ylim)
+            yticks = self.custom_ticks(ystart, yinc, ylog, ylim)
             ax.set_yticks(yticks)
         
         #self.gradient_image(ax, transform=ax.transAxes, extent=(*xlim,*ylim), cmap=bgcm, aspect='auto')
@@ -253,11 +253,11 @@ class ZLabPlot:
         ticks = []
         if log == False:
             while tick_start+tick_inc*i <= lim[1]:
-                ticks.append(ystart+yinc*i)
+                ticks.append(tick_start+tick_inc*i)
                 i += 1
         else:
             while tick_start+tick_inc**i <= lim[1]:
-                ticks.append(ystart+yinc**i)
+                ticks.append(tick_start+tick_inc**i)
                 i += 1
         return ticks
 
