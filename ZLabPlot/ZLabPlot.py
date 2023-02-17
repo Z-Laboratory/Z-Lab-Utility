@@ -109,14 +109,19 @@ class ZLabPlot:
 
     def add_subplot(self, subplot_name = "0", subplot_spec = 111, \
                           plottitle = None,\
-                          framewidth = None, twinx = False):
+                          framewidth = None, twinx = False, \
+                          projection = '2d'):
         subplot_name_ = str(subplot_name)
         if self.subplot_map.get(subplot_name_) is not None:
             print("subplot name has already been used.")
         else:
             #, margin_ratio = 0.15, axsize = 0.7, wspace = 0.3, hspace = 0.3
             # self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, position= [margin_ratio*(1-axsize), margin_ratio*(1-axsize), axsize, axsize])
-            self.subplot_map[subplot_name_] = plt.subplot(subplot_spec)
+            if projection == '3d':
+                from mpl_toolkits.mplot3d import axes3d
+                self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, projection = projection)
+            else:
+                self.subplot_map[subplot_name_] = plt.subplot(subplot_spec)
             self.subplot_map[subplot_name_].set_title(label = plottitle, pad = 10)
             self.plot_data_map[subplot_name_] = []
             if twinx == True:
