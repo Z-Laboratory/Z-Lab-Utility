@@ -121,7 +121,7 @@ class ZLabPlot:
                 from mpl_toolkits.mplot3d import axes3d
                 self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, projection = projection)
             else:
-                self.subplot_map[subplot_name_] = plt.subplot(subplot_spec)
+                self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, position = [0.1, 0.1, 0.9, 0.9])
             self.subplot_map[subplot_name_].set_title(label = plottitle, pad = 10)
             self.plot_data_map[subplot_name_] = []
             if twinx == True:
