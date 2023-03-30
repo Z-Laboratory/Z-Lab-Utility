@@ -112,14 +112,15 @@ class ZLabPlot:
                           framewidth = None, twinx = False, \
                           projection = '2d'):
         subplot_name_ = str(subplot_name)
+        self.projection = projection
         if self.subplot_map.get(subplot_name_) is not None:
             print("subplot name has already been used.")
         else:
             #, margin_ratio = 0.15, axsize = 0.7, wspace = 0.3, hspace = 0.3
             # self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, position= [margin_ratio*(1-axsize), margin_ratio*(1-axsize), axsize, axsize])
-            if projection == '3d':
+            if self.projection == '3d':
                 from mpl_toolkits.mplot3d import axes3d
-                self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, projection = projection)
+                self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, projection = self.projection)
             else:
                 self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, position = [0.1, 0.1, 0.9, 0.9])
             self.subplot_map[subplot_name_].set_title(label = plottitle, pad = 10)
@@ -128,13 +129,13 @@ class ZLabPlot:
                 self.subplot_map[subplot_name_+"-t"] = self.subplot_map[subplot_name_].twinx()
                 self.plot_data_map[subplot_name_+"-t"] = []
 
-    def add_data(self, data_x, data_y, subplot_name = "0", legend = None, \
+    def add_data(self, data_x, data_y, data_z = None, subplot_name = "0", legend = None, \
                        xlim = None, ylim = None, xlog = False, ylog = False, xstart = None, xinc = None, ystart = None, yinc = None, \
-                       xlabel = None, ylabel = None, \
+                       xlabel = None, ylabel = None, zlabel = None, \
                        color = None, lw = None, ls = None, ms = None, msize = None, mf = None, cmap = None, max_cmap_index = None, \
                        legendtitle = None, legendtitle_fontsize = None, legend_fontsize = None, tick_fontsize = None, label_fontsize = None, hide_xtick = False, hide_ytick = False, \
                        ncol = 1, legend_location = None, \
-                       twinx = False, plottype = None):
+                       twinx = False, plottype = None, is_scatter = False):
         #lw    = line width
         #ls    = line style https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
         #ms    = marker style https://matplotlib.org/stable/api/markers_api.html
@@ -174,50 +175,61 @@ class ZLabPlot:
         else:                                          mf_    = self.feature_padding(data_len, mf, None)           
 
         #setting colors
-        if cmap is None:
-            if type(color) == tuple or type(color) == str or type(color) == int: color_ = self.feature_padding(data_len, [], color)
-            else:                                                                color_ = self.feature_padding(data_len, color, None)
-            color_tmp = []
-            for c in color_:
-                if type(c) == tuple:
-                    if len(c) == 3:   color_tmp.append(self.get_Color_from_RGB(c))
-                    elif len(c) == 4: color_tmp.append(c)
-                elif type(c) == int: color_tmp.append(self.default_color_list[c%self.number_of_default_colors])
-                else: color_tmp.append(c)      
-            color_ = color_tmp
-        else:
-            color_tmp = []
-            if max_cmap_index is None:
-                max_cmap_index = 0
-                if color is not None:
-                    max_cmap_index = 0
-                    for c in color:
-                        if type(c) == int: max_cmap_index = max(max_cmap_index, c)
-                else:
-                    max_cmap_index = data_len
-            cNorm  = mpl.colors.Normalize(vmin = 0, vmax = max_cmap_index)
-            scalarMap = mpl.cm.ScalarMappable(norm=cNorm, cmap=plt.get_cmap(cmap))
-            if color is None: color_tmp = [scalarMap.to_rgba(i) for i in range(data_len)]
+        if not is_scatter:
+            if cmap is None:
+                if type(color) == tuple or type(color) == str or type(color) == int: color_ = self.feature_padding(data_len, [], color)
+                else:                                                                color_ = self.feature_padding(data_len, color, None)
+                color_tmp = []
+                for c in color_:
+                    if type(c) == tuple:
+                        if len(c) == 3:   color_tmp.append(self.get_Color_from_RGB(c))
+                        elif len(c) == 4: color_tmp.append(c)
+                    elif type(c) == int: color_tmp.append(self.default_color_list[c%self.number_of_default_colors])
+                    else: color_tmp.append(c)      
+                color_ = color_tmp
             else:
-                if len(color) != data_len:
-                    print("ZLabPlot error: the length of color array specified is not consistent with number of curves provided.")
-                    exit()
-                for c in color:
-                    if type(c) == int: color_tmp.append(scalarMap.to_rgba(c))  
-                    else: color_tmp.append(c)
-            color_ = color_tmp[:]
+                color_tmp = []
+                if max_cmap_index is None:
+                    max_cmap_index = 0
+                    if color is not None:
+                        max_cmap_index = 0
+                        for c in color:
+                            if type(c) == int: max_cmap_index = max(max_cmap_index, c)
+                    else:
+                        max_cmap_index = data_len
+                cNorm  = mpl.colors.Normalize(vmin = 0, vmax = max_cmap_index)
+                scalarMap = mpl.cm.ScalarMappable(norm=cNorm, cmap=plt.get_cmap(cmap))
+                if color is None: color_tmp = [scalarMap.to_rgba(i) for i in range(data_len)]
+                else:
+                    if len(color) != data_len:
+                        print("ZLabPlot error: the length of color array specified is not consistent with number of curves provided.")
+                        exit()
+                    for c in color:
+                        if type(c) == int: color_tmp.append(scalarMap.to_rgba(c))  
+                        else: color_tmp.append(c)
+                color_ = color_tmp[:]
+        else:
+            color_ = color
 
         #adding data
-        for index in range(data_len):
-            thisline = ax.plot(data_x[index], data_y[index], label=legend_[index])
-            self.plot_data_map[subplot_name_].append(thisline[0])
-            if lw_[index] is not None: self.plot_data_map[subplot_name_][-1].set_linewidth(lw_[index])
-            if ls_[index] is not None: self.plot_data_map[subplot_name_][-1].set_linestyle(ls_[index])
-            if ms_[index] is not None: self.plot_data_map[subplot_name_][-1].set_marker(ms_[index])
-            if msize_[index] is not None: self.plot_data_map[subplot_name_][-1].set_markersize(msize_[index])
-            if mf_[index] is not None: self.plot_data_map[subplot_name_][-1].set_fillstyle(mf_[index])
-            #self.plot_data_map[subplot_name_][-1].set_markerfacecolor(markerface_[index])
-            if color_[index] is not None: self.plot_data_map[subplot_name_][-1].set_color(color_[index])
+        if not is_scatter:
+            for index in range(data_len):
+                thisline = ax.plot(data_x[index], data_y[index], label=legend_[index])
+                self.plot_data_map[subplot_name_].append(thisline[0])
+                if lw_[index] is not None: self.plot_data_map[subplot_name_][-1].set_linewidth(lw_[index])
+                if ls_[index] is not None: self.plot_data_map[subplot_name_][-1].set_linestyle(ls_[index])
+                if ms_[index] is not None: self.plot_data_map[subplot_name_][-1].set_marker(ms_[index])
+                if msize_[index] is not None: self.plot_data_map[subplot_name_][-1].set_markersize(msize_[index])
+                if mf_[index] is not None: self.plot_data_map[subplot_name_][-1].set_fillstyle(mf_[index])
+                #self.plot_data_map[subplot_name_][-1].set_markerfacecolor(markerface_[index])
+                if color_[index] is not None: self.plot_data_map[subplot_name_][-1].set_color(color_[index])
+        else:
+            if self.projection == '2d':
+                thisscatter = ax.scatter(data_x, data_y, s = msize_, c = color_, cmap = cmap)
+            else:
+                thisscatter = ax.scatter(data_x, data_y, data_z, s = msize_, c = color_, cmap = cmap)
+            self.plot_data_map[subplot_name_].append(thisscatter)
+            plt.colorbar(thisscatter)
 
         #set legend
         if legend is not None: ax.legend(title = legendtitle, ncol = ncol, labelspacing = 0.5, frameon = False, loc = legend_location)
@@ -250,8 +262,11 @@ class ZLabPlot:
         if plottype is not None:
             if xlabel is None: xlabel = self.xlabel_map[plottype]
             if ylabel is None: ylabel = self.ylabel_map[plottype]
+            
         ax.set_xlabel(xlabel, fontsize = label_fontsize)
         ax.set_ylabel(ylabel, fontsize = label_fontsize)
+        if self.projection == '3d':
+            ae.set_zlabel(zlabel, fontisze = label_fontsize)
 
     def custom_ticks(self, tick_start, tick_inc, log, lim):
         i = 0
