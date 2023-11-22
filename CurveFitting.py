@@ -45,7 +45,7 @@ class Model:
             return self.function(x, *fit_arvg)
         self.fit_function = fit_function
 
-    def fit(self, xdata, ydata, yerr = None, p0 = None, bounds = (-np.inf, np.inf), const_flag = None, absolute_sigma = False):
+    def fit(self, xdata, ydata, yerr = None, p0 = None, bounds = (-np.inf, np.inf), const_flag = None, **kwargs):
         # argument
         #   xdata:      np.array
         #   ydata:      np.array
@@ -77,7 +77,7 @@ class Model:
             new_bounds = bounds
             self.fit_function = self.function
             
-        popt, pcov = curve_fit(self.fit_function, xdata, ydata, p0 = new_p0, bounds = new_bounds, sigma = yerr, absolute_sigma = absolute_sigma)
+        popt, pcov = curve_fit(self.fit_function, xdata, ydata, p0 = new_p0, bounds = new_bounds, sigma = yerr, **kwargs)
         perr = np.sqrt(np.diag(pcov))
         self.popt = []
         self.perr = []
