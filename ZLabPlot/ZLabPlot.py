@@ -135,7 +135,7 @@ class ZLabPlot:
                        color = None, lw = None, ls = None, ms = None, msize = None, mf = None, cmap = None, max_cmap_index = None, \
                        legendtitle = None, legendtitle_fontsize = None, legend_fontsize = None, tick_fontsize = None, label_fontsize = None, hide_xtick = False, hide_ytick = False, \
                        ncol = 1, legend_location = None, \
-                       twinx = False, plottype = None, is_scatter = False):
+                       twinx = False, plottype = None, is_scatter = False, zorder = None):
         #lw    = line width
         #ls    = line style https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html
         #ms    = marker style https://matplotlib.org/stable/api/markers_api.html
@@ -173,6 +173,8 @@ class ZLabPlot:
         else:                                          msize_ = self.feature_padding(data_len, msize, None)
         if type(mf) == str:                            mf_    = self.feature_padding(data_len, [], mf)
         else:                                          mf_    = self.feature_padding(data_len, mf, None)           
+        if type(zorder) == int:                        zorder_= self.feature_padding(data_len, [], zorder)
+        else:                                          zorder_= self.feature_padding(data_len, zorder, None)
 
         #setting colors
         if not is_scatter:
@@ -221,6 +223,7 @@ class ZLabPlot:
                 if ms_[index] is not None: self.plot_data_map[subplot_name_][-1].set_marker(ms_[index])
                 if msize_[index] is not None: self.plot_data_map[subplot_name_][-1].set_markersize(msize_[index])
                 if mf_[index] is not None: self.plot_data_map[subplot_name_][-1].set_fillstyle(mf_[index])
+                if zorder_[index] is not None: self.plot_data_map[subplot_name_][-1].set_zorder(zorder_[index])
                 #self.plot_data_map[subplot_name_][-1].set_markerfacecolor(markerface_[index])
                 if color_[index] is not None: self.plot_data_map[subplot_name_][-1].set_color(color_[index])
         else:
@@ -266,7 +269,7 @@ class ZLabPlot:
         ax.set_xlabel(xlabel, fontsize = label_fontsize)
         ax.set_ylabel(ylabel, fontsize = label_fontsize)
         if self.projection == '3d':
-            ae.set_zlabel(zlabel, fontisze = label_fontsize)
+            ax.set_zlabel(zlabel, fontisze = label_fontsize)
 
     def custom_ticks(self, tick_start, tick_inc, log, lim):
         i = 0
