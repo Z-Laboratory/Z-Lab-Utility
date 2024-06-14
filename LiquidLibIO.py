@@ -156,7 +156,7 @@ def read(filename, target_k_index = -1, target_k = 0):
     #   target_k_index: int
     #   target_k: float
     #return
-    #   if quantity in ["gr", "sk", "r2t", "mr2t", "alpha_2", "chi_4", "eacf"]
+    #   if quantity in ["gr", "gtheta", "sk", "r2t", "mr2t", "alpha_2", "chi_4", "eacf"]
     #      x: np.array(float) (1D)
     #      y: np.array(float) (1D)
     #   if quantity in ["fskt", "fkt"]
@@ -171,23 +171,31 @@ def read(filename, target_k_index = -1, target_k = 0):
     #           k:    np.array(float) (1D)
     #           t:    np.array(float) (1D)
     #           f_kt: np.array(float) (2D)
+    #   if quantity in ["gsrt", "grt"]
+    #           r:    np.array(float) (1D)
+    #           t:    np.array(float) (1D)
+    #           g_tr: np.array(float) (2D)
     #   quantity: str
     quantity = ""
     with open(filename,"r") as fin:
         aline1 = fin.readline()
         if "Self intermediate scattering function" in aline1:         quantity="fskt"
         elif "Collective intermediate scattering function" in aline1: quantity="fkt"
+        elif "Self van Hove correlation function" in aline1:          quantity="gsrt"
+        elif "Collective van Hove correlation function" in aline1:    quantity="grt"
         aline2 = fin.readline()
         if quantity == "":
             if "S(k)" in aline2:        quantity = "sk"
             elif "g(r)" in aline2:      quantity = "gr"
+            elif "g(theta)" in aline2:  quantity = "gtheta"
             elif "r2(t)" in aline2:
                 if "Mutual" in aline1:  quantity += "mr2t"
                 else:                   quantity = "r2t"
             elif "alpha_2" in aline2:   quantity = "alpha_2"
             elif "chi_4" in aline2:     quantity = "chi_4"
             elif "C_jj" in aline2:      quantity = "eacf"
-        if quantity in ["gr", "sk", "r2t", "mr2t", "alpha_2", "chi_4", "eacf"]:
+            elif "C_vv" in aline2:      quantity = "vacf"
+        if quantity in ["gr", "gtheta", "sk", "r2t", "mr2t", "alpha_2", "chi_4", "vacf", "eacf"]:
             x = []
             y = []
             for aline in fin:
@@ -233,6 +241,23 @@ def read(filename, target_k_index = -1, target_k = 0):
                 return k[target_k_index], t, f_kt[target_k_index], quantity
             else:
                 return k, t, f_kt, quantity
+        elif quantity in ["gsrt", "grt"]:
+            r = []
+            t = []
+            g_rt = []
+            aline = fin.readline()
+            while "#" not in aline:
+                r.append(float(aline.strip()))
+                aline = fin.readline()
+            for aline in fin:
+                linelist = aline.strip().split()
+                t.append(float(linelist[0]))
+                g_rt.append(np.array([float(i) for i in linelist[1:]]))
+            r = np.array(r)
+            t = np.array(t)
+            g_rt = np.array(g_rt)
+            g_tr = g_rt.transpose()
+            return r, t, g_tr, quantity
         else:
             print("Error: quantity not recognize.")
             exit()
@@ -258,6 +283,7 @@ def write(quantity,input_filename,trajectory_file_path,output_file_path,\
                              "mr2t":"MutualMeanSquaredDisplacement",\
                              "msd":"MeanSquaredDsiplacement",\
                              "chi4":"FourPointCorrelationFunction",\
+                             "vacf":"VelocityAutocorrelationFunction", \
                              "eacf":"ElectricCurrentAutocorrelationFunction"}
     quantity_function = quantity_function_map[quantity]
     with open(input_filename,"w",newline='\n') as fout:

@@ -41,15 +41,16 @@ class ZLabPlot:
         "RDF": r'$r\ \mathrm{(Å)}$',
         "gr": r'$r\ \mathrm{(Å)}$',
         #Angular Distribution Function
-        "ADF": r'$\theta\ \mathrm{(degree)}$',
+        "gtheta": r'$\theta\ \mathrm{(rad)}$',
+        "ADF": r'$\theta\ \mathrm{(rad)}$',
         #Structure Factor
         "sk": r'$Q\ \mathrm{(Å^{-1})}$',
         "sq": r'$Q\ \mathrm{(Å^{-1})}$',
         #Mean Squared Displacment
         "msd": r'$t\ \mathrm{(ps)}$',
         "r2t": r'$t\ \mathrm{(ps)}$',
-        "mmsd":r'$〈r^2〉(t)\ \mathrm{(nm^2)}$',
-        "mr2t":r'$〈r^2〉(t)\ \mathrm{(nm^2)}$',
+        "mmsd":r'$〈r^2〉(t)\ \mathrm{(Å^2)}$',
+        "mr2t":r'$〈r^2〉(t)\ \mathrm{(Å^2)}$',
         #Autocorrelation Functions
         "vacf": r'$t\ \mathrm{(ps)}$',                                      #Velocity
         "eacf": r'$t\ \mathrm{(ps)}$',                                      #Electrical Current
@@ -57,6 +58,8 @@ class ZLabPlot:
         "sacf": r'$t\ \mathrm{(ps)}$',                                      #Stress
         "fskt": r'$t\ \mathrm{(ps)}$',                                      #Self-intermediate scattering function
         "fkt": r'$t\ \mathrm{(ps)}$',                                       #Collective-intermediate scattering function
+        "gsrt": r'$r\ \mathrm{(Å)}$',                                       #Self-van Hove correlation function
+        "grt": r'$r\ \mathrm{(Å)}$',                                        #Collective-van Hove correlation function
         "alpha_2": r'$t\ \mathrm{(ps)}$',                                   #Non-Gaussian parameter
         "chi_4": r'$t\ \mathrm{(ps)}$'}                                     #Four-Point
         self.ylabel_map = {\
@@ -65,22 +68,25 @@ class ZLabPlot:
         "RDF": r'$g(r)$',
         "gr": r'$g(r)$',
         #Angular Distribution Function
-        "ADF": r'$ADF(\theta)$',
+        "gtheta": r'$g(\theta)$',
+        "ADF": r'$g(\theta)$',
         #Structure Factor
         "sk": r'$S(Q)$',
         "sq": r'$S(Q)$',
         #Mean Squared Displacment
-        "msd":r'$〈r^2〉(t)\ \mathrm{(nm^2/s)}$',
-        "r2t":r'$〈r^2〉(t)\ \mathrm{(nm^2/s)}$',
-        "mmsd":r'$〈r^2〉(t)\ \mathrm{(nm^2/s)}$',
-        "mr2t":r'$〈r^2〉(t)\ \mathrm{(nm^2/s)}$',
+        "msd":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
+        "r2t":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
+        "mmsd":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
+        "mr2t":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
         #Autocorrelation Functions
-        "vacf": r'$\frac{〈v(t)v(0)〉/〈v(0)^2〉}$',                          #Velocity
+        "vacf": r'$\frac{〈v(t)v(0)〉}{〈v(0)^2〉}$',                          #Velocity
         "eacf": r'$〈J(t)J(0)〉/〈J(0)^2〉$',                                 #Electrical Current
         "hacf": r'$\frac{〈J(t)J(0)〉/〈J(0)^2〉}$',                          #Heat Flux
         "sacf": r'$\frac{〈\tau_{ij}(t)\tau_{ij}(0)〉}{〈\tau_{ij}(0)^2〉}$', #Stress
         "fskt": r'$F_s(Q,t)$',                                               #Self-intermediate scattering function
         "fkt": r'$F(Q,t)$',                                                  #Collective-intermediate scattering function
+        "gsrt": r'$G_s(r,t)$',                                               #Self-van Hove correlation function
+        "grt": r'$G(r,t)$',                                                  #Collective-van Hove correlation function
         "alpha_2": r'$\alpha_2(t)$',                                         #Non-Gaussian parameter
         "chi_4": r'$\chi_4(t)$'}                                             #Four-Point
 
