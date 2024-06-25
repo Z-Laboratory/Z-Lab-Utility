@@ -191,11 +191,11 @@ def read(filename, target_k_index = -1, target_k = 0):
             elif "r2(t)" in aline2:
                 if "Mutual" in aline1:  quantity += "mr2t"
                 else:                   quantity = "r2t"
-            elif "alpha_2" in aline2:   quantity = "alpha_2"
-            elif "chi_4" in aline2:     quantity = "chi_4"
+            elif "alpha_2(t)" in aline2:   quantity = "alpha2t"
+            elif "chi_4(t)" in aline2:     quantity = "chi4t"
             elif "C_jj" in aline2:      quantity = "eacf"
             elif "C_vv" in aline2:      quantity = "vacf"
-        if quantity in ["gr", "gtheta", "sk", "r2t", "mr2t", "alpha_2", "chi_4", "vacf", "eacf"]:
+        if quantity in ["gr", "gtheta", "sk", "r2t", "mr2t", "alpha2t", "chi4t", "vacf", "eacf"]:
             x = []
             y = []
             for aline in fin:
@@ -271,7 +271,7 @@ def write(quantity,input_filename,trajectory_file_path,output_file_path,\
           weighting_type=None,atomic_form_factor_1=None,atomic_form_factor_2=None,scattering_length_1=None,scattering_length_2=None,\
           input_box_length=None,k_start_value=0,k_end_value=5,k_interval=0.01,\
           include_intramolecular=None,number_of_bins=400,max_cutoff_length=10,\
-          overlap_length=1):
+          overlap_length=1,use_gpu=False):
     #argument
     #   the same as LiquidLib input
     #   note: atom_name, mass, charge, atomic_form_factor, and scattering_length are all str, not list
@@ -282,7 +282,8 @@ def write(quantity,input_filename,trajectory_file_path,output_file_path,\
                              "r2t":"MeanSquaredDisplacement",\
                              "mr2t":"MutualMeanSquaredDisplacement",\
                              "msd":"MeanSquaredDsiplacement",\
-                             "chi4":"FourPointCorrelationFunction",\
+                             "chi4t":"FourPointCorrelationFunction",\
+                             "alpha2t":"NonGaussianParameter",\
                              "vacf":"VelocityAutocorrelationFunction", \
                              "eacf":"ElectricCurrentAutocorrelationFunction"}
     quantity_function = quantity_function_map[quantity]
@@ -309,7 +310,7 @@ def write(quantity,input_filename,trajectory_file_path,output_file_path,\
             fout.write('''
 -weighting_type=%s'''%(weighting_type))
         #time correlation
-        if quantity in ['msd','r2t','mr2t','fskt','fkt','chi4','eacf']:
+        if quantity in ['msd','r2t','mr2t','fskt','fkt','chi4t','alpha2t','eacf']:
             fout.write('''
 -time_scale_type=%s
 -trajectory_delta_time=%s
@@ -379,6 +380,10 @@ def write(quantity,input_filename,trajectory_file_path,output_file_path,\
         if quantity in ['chi4']:
             fout.write('''
 -overlap_length=%s'''%(overlap_length))
+        if use_gpu == True:
+            fout.write('''
+-use_gpu=yes''')
+
 
 
 

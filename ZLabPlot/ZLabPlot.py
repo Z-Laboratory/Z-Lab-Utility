@@ -60,8 +60,8 @@ class ZLabPlot:
         "fkt": r'$t\ \mathrm{(ps)}$',                                       #Collective-intermediate scattering function
         "gsrt": r'$r\ \mathrm{(Å)}$',                                       #Self-van Hove correlation function
         "grt": r'$r\ \mathrm{(Å)}$',                                        #Collective-van Hove correlation function
-        "alpha_2": r'$t\ \mathrm{(ps)}$',                                   #Non-Gaussian parameter
-        "chi_4": r'$t\ \mathrm{(ps)}$'}                                     #Four-Point
+        "alpha2t": r'$t\ \mathrm{(ps)}$',                                   #Non-Gaussian parameter
+        "chi4t": r'$t\ \mathrm{(ps)}$'}                                     #Four-Point
         self.ylabel_map = {\
         #Radial Distribution Function
         "PDF": r'$g(r)$',
@@ -87,8 +87,8 @@ class ZLabPlot:
         "fkt": r'$F(Q,t)$',                                                  #Collective-intermediate scattering function
         "gsrt": r'$G_s(r,t)$',                                               #Self-van Hove correlation function
         "grt": r'$G(r,t)$',                                                  #Collective-van Hove correlation function
-        "alpha_2": r'$\alpha_2(t)$',                                         #Non-Gaussian parameter
-        "chi_4": r'$\chi_4(t)$'}                                             #Four-Point
+        "alpha2t": r'$\alpha_2(t)$',                                         #Non-Gaussian parameter
+        "chi4t": r'$\chi_4(t)$'}                                             #Four-Point
 
     def get_Color_from_RGB(self, RGB):
         #RGB = (int, int, int)
