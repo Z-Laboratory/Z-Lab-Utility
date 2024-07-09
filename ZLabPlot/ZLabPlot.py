@@ -49,19 +49,21 @@ class ZLabPlot:
         #Mean Squared Displacment
         "msd": r'$t\ \mathrm{(ps)}$',
         "r2t": r'$t\ \mathrm{(ps)}$',
-        "mmsd":r'$〈r^2〉(t)\ \mathrm{(Å^2)}$',
-        "mr2t":r'$〈r^2〉(t)\ \mathrm{(Å^2)}$',
-        #Autocorrelation Functions
-        "vacf": r'$t\ \mathrm{(ps)}$',                                      #Velocity
-        "eacf": r'$t\ \mathrm{(ps)}$',                                      #Electrical Current
-        "hacf": r'$t\ \mathrm{(ps)}$',                                      #Heat Flux
-        "sacf": r'$t\ \mathrm{(ps)}$',                                      #Stress
+        "mmsd":r'$\langle r^2\rangle (t)\ \mathrm{(Å^2)}$',
+        "mr2t":r'$\langle r^2\rangle (t)\ \mathrm{(Å^2)}$',
+        #Time correlation Functions
+        "vacf": r'$t\ \mathrm{(ps)}$',                                      #Velocity autocorrelation function
+        "eacf": r'$t\ \mathrm{(ps)}$',                                      #Electrical current autocorrelation function
+        "hacf": r'$t\ \mathrm{(ps)}$',                                      #Heat flux autocorrelation function
+        "sacf": r'$t\ \mathrm{(ps)}$',                                      #Stress autocorrelation function
         "fskt": r'$t\ \mathrm{(ps)}$',                                      #Self-intermediate scattering function
         "fkt": r'$t\ \mathrm{(ps)}$',                                       #Collective-intermediate scattering function
+        "fthetakt": r'$t\ \mathrm{(ps)}$',                                  #Angular-averaged Collective-intermediate scattering function
         "gsrt": r'$r\ \mathrm{(Å)}$',                                       #Self-van Hove correlation function
         "grt": r'$r\ \mathrm{(Å)}$',                                        #Collective-van Hove correlation function
         "alpha2t": r'$t\ \mathrm{(ps)}$',                                   #Non-Gaussian parameter
-        "chi4t": r'$t\ \mathrm{(ps)}$'}                                     #Four-Point
+        "chi4t": r'$t\ \mathrm{(ps)}$',                                     #Four-Point correlation function
+        }
         self.ylabel_map = {\
         #Radial Distribution Function
         "PDF": r'$g(r)$',
@@ -74,21 +76,23 @@ class ZLabPlot:
         "sk": r'$S(Q)$',
         "sq": r'$S(Q)$',
         #Mean Squared Displacment
-        "msd":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
-        "r2t":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
-        "mmsd":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
-        "mr2t":r'$〈r^2〉(t)\ \mathrm{(Å^2/s)}$',
-        #Autocorrelation Functions
-        "vacf": r'$\frac{〈v(t)v(0)〉}{〈v(0)^2〉}$',                          #Velocity
-        "eacf": r'$〈J(t)J(0)〉/〈J(0)^2〉$',                                 #Electrical Current
-        "hacf": r'$\frac{〈J(t)J(0)〉/〈J(0)^2〉}$',                          #Heat Flux
-        "sacf": r'$\frac{〈\tau_{ij}(t)\tau_{ij}(0)〉}{〈\tau_{ij}(0)^2〉}$', #Stress
+        "msd":r'$\langle r^2\rangle (t)\ \mathrm{(Å^2/s)}$',
+        "r2t":r'$\langle r^2\rangle (t)\ \mathrm{(Å^2/s)}$',
+        "mmsd":r'$\langle r^2\rangle (t)\ \mathrm{(Å^2/s)}$',
+        "mr2t":r'$\langle r^2\rangle (t)\ \mathrm{(Å^2/s)}$',
+        #Time correlation Functions
+        "vacf": r'$\langle v(t)v(0)\rangle / \langle v(0)^2\rangle$',                         #Velocity autocorrelation function
+        "eacf": r'$\langle J(t)J(0)\rangle / \langle J(0)^2\rangle$',                                 #Electrical current autocorrelation function
+        "hacf": r'$\langle J(t)J(0)\rangle / \langle J(0)^2\rangle$',                          #Heat flux autocorrelation function
+        "sacf": r'$\langle \tau_{ij}(t)\tau_{ij}(0)\rangle / \langle \tau_{ij}(0)^2\rangle$', #Stress autocorrelation function
         "fskt": r'$F_s(Q,t)$',                                               #Self-intermediate scattering function
         "fkt": r'$F(Q,t)$',                                                  #Collective-intermediate scattering function
+        "fthetakt": r'$\langle F(Q,t) \rangle _{\theta}$',                                     #Angular-averaged Collective-intermediate scattering function
         "gsrt": r'$G_s(r,t)$',                                               #Self-van Hove correlation function
         "grt": r'$G(r,t)$',                                                  #Collective-van Hove correlation function
         "alpha2t": r'$\alpha_2(t)$',                                         #Non-Gaussian parameter
-        "chi4t": r'$\chi_4(t)$'}                                             #Four-Point
+        "chi4t": r'$\chi_4(t)$',                                             #Four-Point correlation function
+        }
 
     def get_Color_from_RGB(self, RGB):
         #RGB = (int, int, int)
@@ -269,8 +273,16 @@ class ZLabPlot:
         
         #set labels
         if plottype is not None:
-            if xlabel is None: xlabel = self.xlabel_map[plottype]
-            if ylabel is None: ylabel = self.ylabel_map[plottype]
+            if xlabel is None:
+                xlabel = self.xlabel_map.get(plottype, "")
+                if "Q_" in plottype or "q_" in plottype or "qbar_" in plottype:
+                    xlabel = r'$t\ \mathrm{(ps)}$'
+            if ylabel is None:
+                ylabel = self.ylabel_map.get(plottype, "")
+                if "Q_" in plottype or "q_" in plottype:
+                    ylabel = r"$%s(t)$"%(plottype)
+                elif "qbar_" in plottype:
+                    ylabel = r"$%s(t)$"%(plottype.replace("qbar", "\\bar{q}"))
             
         ax.set_xlabel(xlabel, fontsize = label_fontsize)
         ax.set_ylabel(ylabel, fontsize = label_fontsize)

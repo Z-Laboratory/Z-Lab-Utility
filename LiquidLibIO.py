@@ -183,6 +183,8 @@ def read(filename, target_k_index = -1, target_k = 0):
         elif "Collective intermediate scattering function" in aline1: quantity="fkt"
         elif "Self van Hove correlation function" in aline1:          quantity="gsrt"
         elif "Collective van Hove correlation function" in aline1:    quantity="grt"
+        elif "Angular averaged collective intermediate scattering function" in aline1: quantity="fthetakt"
+        elif "Bond orientational order parameter" in aline1: quantity="qlt"
         aline2 = fin.readline()
         if quantity == "":
             if "S(k)" in aline2:        quantity = "sk"
@@ -195,7 +197,11 @@ def read(filename, target_k_index = -1, target_k = 0):
             elif "chi_4(t)" in aline2:     quantity = "chi4t"
             elif "C_jj" in aline2:      quantity = "eacf"
             elif "C_vv" in aline2:      quantity = "vacf"
-        if quantity in ["gr", "gtheta", "sk", "r2t", "mr2t", "alpha2t", "chi4t", "vacf", "eacf"]:
+        elif quantity == "qlt":
+            if "# t" != aline2.strip():
+                quantity = aline2.strip().split()[-1]
+                quantity = quantity[:quantity.index('(')]
+        if quantity in ["gr", "gtheta", "sk", "r2t", "mr2t", "alpha2t", "chi4t", "vacf", "eacf"] or "Q_" in quantity:
             x = []
             y = []
             for aline in fin:
@@ -206,7 +212,22 @@ def read(filename, target_k_index = -1, target_k = 0):
             x = np.array(x)
             y = np.array(y)
             return x, y, quantity
-        elif quantity in ["fskt", "fkt"]:
+        elif quantity == "qlt":
+            t = []
+            qlt_per_atom = []
+            aline = fin.readline()
+            while "#" not in aline:
+                t.append(float(aline.strip()))
+                aline = fin.readline()
+            quantity = aline.strip().split()[-1]
+            quantity = quantity[:quantity.index('(')]
+            for aline in fin:
+                linelist = aline.strip().split()
+                qlt_per_atom.append([float(v) for v in linelist])
+            t = np.array(t)
+            qlt_per_atom = np.array(qlt_per_atom).transpose()
+            return t, qlt_per_atom, quantity
+        elif quantity in ["fskt", "fkt", "fthetakt"]:
             k = []
             t = []
             f_tk = []
@@ -275,16 +296,18 @@ def write(quantity,input_filename,trajectory_file_path,output_file_path,\
     #argument
     #   the same as LiquidLib input
     #   note: atom_name, mass, charge, atomic_form_factor, and scattering_length are all str, not list
-    quantity_function_map = {"sk" :"StructureFactor",\
-                             "gr" :"PairDistributionFunction",\
-                             "fskt":"SelfIntermediateScatteringFunction",\
-                             "fkt":"CollectiveIntermediateScatteringFunction",\
-                             "r2t":"MeanSquaredDisplacement",\
-                             "mr2t":"MutualMeanSquaredDisplacement",\
-                             "msd":"MeanSquaredDsiplacement",\
-                             "chi4t":"FourPointCorrelationFunction",\
-                             "alpha2t":"NonGaussianParameter",\
-                             "vacf":"VelocityAutocorrelationFunction", \
+    quantity_function_map = {"sk" :"StructureFactor",
+                             "gr" :"PairDistributionFunction",
+                             "gtheta":"AngularDistributionFunction",
+                             "fskt":"SelfIntermediateScatteringFunction",
+                             "fkt":"CollectiveIntermediateScatteringFunction",
+                             "fthetakt":"AngularAveragedCollectiveIntermediateScatteringFunction",
+                             "r2t":"MeanSquaredDisplacement",
+                             "mr2t":"MutualMeanSquaredDisplacement",
+                             "msd":"MeanSquaredDsiplacement",
+                             "chi4t":"FourPointCorrelationFunction",
+                             "alpha2t":"NonGaussianParameter",
+                             "vacf":"VelocityAutocorrelationFunction",
                              "eacf":"ElectricCurrentAutocorrelationFunction"}
     quantity_function = quantity_function_map[quantity]
     with open(input_filename,"w",newline='\n') as fout:
@@ -310,7 +333,7 @@ def write(quantity,input_filename,trajectory_file_path,output_file_path,\
             fout.write('''
 -weighting_type=%s'''%(weighting_type))
         #time correlation
-        if quantity in ['msd','r2t','mr2t','fskt','fkt','chi4t','alpha2t','eacf']:
+        if quantity in ['msd','r2t','mr2t','fskt','fkt','chi4t','alpha2t','eacf','vacf']:
             fout.write('''
 -time_scale_type=%s
 -trajectory_delta_time=%s
