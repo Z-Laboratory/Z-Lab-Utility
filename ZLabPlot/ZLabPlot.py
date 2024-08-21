@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import Divider, Size
 
 if 'win' in sys.platform.lower() and 'darwin' not in sys.platform.lower(): plt.rcParms['backend'] = 'TkAgg'
 zlab_default_rcParams = plt.rcParams.copy()
@@ -132,7 +133,15 @@ class ZLabPlot:
                 from mpl_toolkits.mplot3d import axes3d
                 self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, projection = self.projection)
             else:
-                self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, position = [0.1, 0.1, 0.9, 0.9])
+                h = [Size.Fixed(1.0), Size.Fixed(plt.rcParams['figure.figsize'][0]*0.7)]
+                v = [Size.Fixed(0.7), Size.Fixed(plt.rcParams['figure.figsize'][1]*0.7)]
+                # fig = plt.figure(figsize=plt.rcParams['figure.figsize'])
+                fig = plt.figure()
+                divider = Divider(fig, (0.1, 0.1, 0.9, 0.9), h, v, aspect=False)
+                self.subplot_map[subplot_name_] = fig.add_axes(divider.get_position(),
+                                                               axes_locator=divider.new_locator(nx=1, ny=1))
+
+                # self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, position = [0.1, 0.1, 0.9, 0.9])
             self.subplot_map[subplot_name_].set_title(label = plottitle, pad = 10)
             self.plot_data_map[subplot_name_] = []
             if twinx == True:
