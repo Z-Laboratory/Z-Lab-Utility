@@ -555,7 +555,7 @@ figure.subplot.hspace: 0.2    # the amount of height reserved for space between 
                               # expressed as a fraction of the average axis height
 
 # Figure layout
-figure.autolayout: True  # When True, automatically adjust subplot
+figure.autolayout: False  # When True, automatically adjust subplot
                           # parameters to make the plot fit the figure
                           # using `tight_layout`
 figure.constrained_layout.use: False  # When True, automatically make plot
