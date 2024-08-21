@@ -121,7 +121,8 @@ class ZLabPlot:
     def add_subplot(self, subplot_name = "0", subplot_spec = 111, \
                           plottitle = None,\
                           framewidth = None, twinx = False, \
-                          projection = '2d'):
+                          projection = '2d',
+                          margin_ratio = 0.7):
         subplot_name_ = str(subplot_name)
         self.projection = projection
         if self.subplot_map.get(subplot_name_) is not None:
@@ -133,8 +134,8 @@ class ZLabPlot:
                 from mpl_toolkits.mplot3d import axes3d
                 self.subplot_map[subplot_name_] = plt.subplot(subplot_spec, projection = self.projection)
             else:
-                h = [Size.Fixed(1.0), Size.Fixed(plt.rcParams['figure.figsize'][0]*0.7)]
-                v = [Size.Fixed(0.7), Size.Fixed(plt.rcParams['figure.figsize'][1]*0.7)]
+                h = [Size.Fixed(1.0), Size.Fixed(plt.rcParams['figure.figsize'][0]*margin_ratio)]
+                v = [Size.Fixed(0.7), Size.Fixed(plt.rcParams['figure.figsize'][1]*margin_ratio)]
                 # fig = plt.figure(figsize=plt.rcParams['figure.figsize'])
                 fig = plt.figure()
                 divider = Divider(fig, (0.1, 0.1, 0.9, 0.9), h, v, aspect=False)
