@@ -60,6 +60,7 @@ class ZLabPlot:
         "fskt": r'$t\ \mathrm{(ps)}$',                                      #Self-intermediate scattering function
         "fkt": r'$t\ \mathrm{(ps)}$',                                       #Collective-intermediate scattering function
         "fthetakt": r'$t\ \mathrm{(ps)}$',                                  #Angular-averaged Collective-intermediate scattering function
+        "ipdkt": r'$t\ \mathrm{(ps)}$',                                     #Interparticle Distance intermediate scattering function
         "gsrt": r'$r\ \mathrm{(Å)}$',                                       #Self-van Hove correlation function
         "grt": r'$r\ \mathrm{(Å)}$',                                        #Collective-van Hove correlation function
         "alpha2t": r'$t\ \mathrm{(ps)}$',                                   #Non-Gaussian parameter
@@ -88,7 +89,8 @@ class ZLabPlot:
         "sacf": r'$\langle \tau_{ij}(t)\tau_{ij}(0)\rangle / \langle \tau_{ij}(0)^2\rangle$', #Stress autocorrelation function
         "fskt": r'$F_s(Q,t)$',                                               #Self-intermediate scattering function
         "fkt": r'$F(Q,t)$',                                                  #Collective-intermediate scattering function
-        "fthetakt": r'$\langle F(Q,t) \rangle _{\theta}$',                                     #Angular-averaged Collective-intermediate scattering function
+        "fthetakt": r'$\langle F(Q,t) \rangle _{\theta}$',                   #Angular-averaged Collective-intermediate scattering function
+        "ipdkt": r'$IPD(Q,t)$',                                              #Interparticle Distance intermediate scattering function
         "gsrt": r'$G_s(r,t)$',                                               #Self-van Hove correlation function
         "grt": r'$G(r,t)$',                                                  #Collective-van Hove correlation function
         "alpha2t": r'$\alpha_2(t)$',                                         #Non-Gaussian parameter

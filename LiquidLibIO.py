@@ -185,6 +185,7 @@ def read(filename, target_k_index = -1, target_k = 0):
         elif "Collective van Hove correlation function" in aline1:    quantity="grt"
         elif "Angular averaged collective intermediate scattering function" in aline1: quantity="fthetakt"
         elif "Bond orientational order parameter" in aline1: quantity="qlt"
+        elif "Interparticle Distance intermediate scattering function" in aline1: quantity='ipdkt'
         aline2 = fin.readline()
         if quantity == "":
             if "S(k)" in aline2:        quantity = "sk"
@@ -227,7 +228,7 @@ def read(filename, target_k_index = -1, target_k = 0):
             t = np.array(t)
             qlt_per_atom = np.array(qlt_per_atom).transpose()
             return t, qlt_per_atom, quantity
-        elif quantity in ["fskt", "fkt", "fthetakt"]:
+        elif quantity in ["fskt", "fkt", "fthetakt", "ipdkt"]:
             k = []
             t = []
             f_tk = []
