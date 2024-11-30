@@ -90,7 +90,7 @@ class ZLabPlot:
         "fskt": r'$F_s(Q,t)$',                                               #Self-intermediate scattering function
         "fkt": r'$F(Q,t)$',                                                  #Collective-intermediate scattering function
         "fthetakt": r'$\langle F(Q,t) \rangle _{\theta}$',                   #Angular-averaged Collective-intermediate scattering function
-        "ipdkt": r'$IPD(Q,t)$',                                              #Interparticle Distance intermediate scattering function
+        "ipdkt": r'$F^{IPD}(Q,t)$',                                              #Interparticle Distance intermediate scattering function
         "gsrt": r'$G_s(r,t)$',                                               #Self-van Hove correlation function
         "grt": r'$G(r,t)$',                                                  #Collective-van Hove correlation function
         "alpha2t": r'$\alpha_2(t)$',                                         #Non-Gaussian parameter
